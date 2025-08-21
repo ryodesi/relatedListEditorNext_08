@@ -30,6 +30,7 @@ const PAGE_SIZE = 10; // 表示件数（設定値）
 // typeを追加して、セルをクリックしただけで編集可能に
 const COLUMNS = [
     { label: '製品', fieldName: 'Product__c', type: 'text', editable: false, wrapText: true },
+    { label: 'SKU', fieldName: 'SKU__c', type: 'text', editable: false, wrapText: true },
     { label: 'フェイス数', fieldName: 'FaceCount__c', type: 'text', editable: true, wrapText: true, cellAttributes: { alignment: 'left' } }
 ];
 
@@ -526,6 +527,7 @@ export default class RelatedListEditor extends LightningElement {
             const records = result.data.surveyReports.map((record, idx) => ({
                 Id: record.Id,
                 Product__c: record.Product__c,
+                SKU__c: idx % 2 === 0 ? '6P' : 'バラ',  // ダミーデータ（実際のデータ取得後は削除）
                 FaceCount__c: record.FaceCount__c ?? '',
                 SalesFloorSelection__c: record.SalesFloorSelection__c,
                 attribute__c: record.attribute__c, 
@@ -1025,6 +1027,7 @@ export default class RelatedListEditor extends LightningElement {
             const records = result.data.surveyReports.map((record, idx) => ({
                 Id: record.Id,
                 Product__c: record.Product__c,
+                SKU__c: idx % 2 === 0 ? '6P' : 'バラ',  // ダミーデータ（実際のデータ取得後は削除）
                 FaceCount__c: record.FaceCount__c,
                 SalesFloorSelection__c: record.SalesFloorSelection__c,
                 attribute__c: record.attribute__c,

@@ -23,13 +23,18 @@
 
 .fixed-width-table th:nth-child(2),
 .fixed-width-table td:nth-child(2) {
-    width: 60%; 
+    width: 35%; 
 }
 
-.fixed-width-table th:nth-child(3){
+.fixed-width-table th:nth-child(3),
+.fixed-width-table td:nth-child(3) {
+    width: 25%;
+}
+
+.fixed-width-table th:nth-child(4){
     text-align: left;
 }
-.fixed-width-table td:nth-child(3) {
+.fixed-width-table td:nth-child(4) {
     width: 40%;
     text-align: center;
 }
@@ -72,5 +77,20 @@
     .fixed-width-table th:first-child,
     .fixed-width-table td:first-child {
         width: 10%;
+    }
+    
+    .fixed-width-table th:nth-child(2),
+    .fixed-width-table td:nth-child(2) {
+        width: 40%;
+    }
+    
+    .fixed-width-table th:nth-child(3),
+    .fixed-width-table td:nth-child(3) {
+        width: 20%;
+    }
+    
+    .fixed-width-table th:nth-child(4),
+    .fixed-width-table td:nth-child(4) {
+        width: 30%;
     }
 }
