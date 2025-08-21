@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<LightningComponentBundle xmlns="http://soap.sforce.com/2006/04/metadata" fqn="relatedListEditorNext">
+    <apiVersion>63.0</apiVersion>
+    <isExposed>true</isExposed> <!-- コンポーネントを公開する設定 -->
+    <masterLabel>relatedListEditorNext</masterLabel>
+    <targets>
+        <target>lightning__RecordPage</target> <!-- レコードページに配置可能 -->
+        <target>lightning__AppPage</target> <!-- アプリページに配置可能 -->
+        <target>lightning__HomePage</target> <!-- ホームページ -->
+        <target>lightning__RecordAction</target>
+    </targets>
+    <targetConfigs>
+        <!-- スマートフォン用フォームファクターのサポートを追加 -->
+        <targetConfig targets="lightning__RecordPage, lightning__AppPage, lightning__HomePage">
+            <supportedFormFactors>
+                <supportedFormFactor type="Small"/>
+                <supportedFormFactor type="Large"/>
+            </supportedFormFactors>
+        </targetConfig>
+    </targetConfigs>
+</LightningComponentBundle>
