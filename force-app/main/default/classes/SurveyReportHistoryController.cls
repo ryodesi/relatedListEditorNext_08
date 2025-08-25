@@ -54,7 +54,7 @@ public with sharing class SurveyReportHistoryController {
         //    LastModifiedDateも取得し、新しい順に並び替える
         List<journal__c> journalsInMonth = [
             SELECT Id, LastModifiedDate,
-                   (SELECT Id, Name, Product__c, attribute__c, SalesFloorSelection__c, FaceCount__c, LastModifiedDate FROM journals__r ORDER BY LastModifiedDate DESC)
+                   (SELECT Id, Name, Product__c, SKU__c, attribute__c, SalesFloorSelection__c, FaceCount__c, LastModifiedDate FROM journals__r ORDER BY LastModifiedDate DESC)
             FROM journal__c
             WHERE customer__c = :accountId
               AND CALENDAR_YEAR(visitday__c) = :targetYear
@@ -115,7 +115,7 @@ public with sharing class SurveyReportHistoryController {
 
         List<journal__c> journalsInMonth = [
             SELECT Id, LastModifiedDate,
-                   (SELECT Id, Name, Product__c, attribute__c, SalesFloorSelection__c, FaceCount__c, LastModifiedDate FROM journals__r ORDER BY LastModifiedDate DESC)
+                   (SELECT Id, Name, Product__c, SKU__c, attribute__c, SalesFloorSelection__c, FaceCount__c, LastModifiedDate FROM journals__r ORDER BY LastModifiedDate DESC)
             FROM journal__c
             WHERE customer__c = :accountId
               AND visitday__c < :startOfCurrentMonth

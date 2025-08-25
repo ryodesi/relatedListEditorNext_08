@@ -527,9 +527,7 @@ export default class RelatedListEditor extends LightningElement {
             const records = result.data.surveyReports.map((record, idx) => ({
                 Id: record.Id,
                 Product__c: record.Product__c,
-                // TODO: ダミーデータ削除 - 実際のSKUフィールドが追加されたら、下記の行を削除してrecord.SKU__cに置き換え
-                SKU__c: idx % 2 === 0 ? '6P' : 'バラ',  // ダミーデータ
-                // SKU__c: record.SKU__c ?? '',  // 実際のデータ取得時はこの行を有効化
+                SKU__c: record.SKU__c ?? '',  // 実際のデータを取得
                 FaceCount__c: record.FaceCount__c ?? '',
                 SalesFloorSelection__c: record.SalesFloorSelection__c,
                 attribute__c: record.attribute__c, 
@@ -549,12 +547,7 @@ export default class RelatedListEditor extends LightningElement {
 
             this.recordTypeKeys.forEach(type => {
                 const filtered = records.filter(filters[type]);
-                // TODO: ダミーデータ削除 - 実際のSKUフィールドが追加されたら、下記のmap処理を削除
-                const filteredWithSKU = filtered.map((rec, newIdx) => ({
-                    ...rec,
-                    SKU__c: newIdx % 2 === 0 ? '6P' : 'バラ'  // フィルタリング後のインデックスで交互表示
-                }));
-                this.dataMap[type] = filteredWithSKU;  // TODO: ダミーデータ削除時は filtered に戻す
+                this.dataMap[type] = filtered;  // フィルタリング後のデータをそのまま使用
                 this.pageMap[type] = this.previousPageMap?.[type] || 1;
                 this.totalPageMap[type] = Math.ceil(filtered.length / PAGE_SIZE);
                 this.showPaginationMap[type] = filtered.length > PAGE_SIZE;
@@ -1034,9 +1027,7 @@ export default class RelatedListEditor extends LightningElement {
             const records = result.data.surveyReports.map((record, idx) => ({
                 Id: record.Id,
                 Product__c: record.Product__c,
-                // TODO: ダミーデータ削除 - 実際のSKUフィールドが追加されたら、下記の行を削除してrecord.SKU__cに置き換え
-                SKU__c: idx % 2 === 0 ? '6P' : 'バラ',  // ダミーデータ
-                // SKU__c: record.SKU__c ?? '',  // 実際のデータ取得時はこの行を有効化
+                SKU__c: record.SKU__c ?? '',  // 実際のデータを取得
                 FaceCount__c: record.FaceCount__c,
                 SalesFloorSelection__c: record.SalesFloorSelection__c,
                 attribute__c: record.attribute__c,
@@ -1057,12 +1048,7 @@ export default class RelatedListEditor extends LightningElement {
 
             this.submittedSurveysRecordTypeKeys.forEach(type => {
                 const filtered = records.filter(filters[type]);
-                // TODO: ダミーデータ削除 - 実際のSKUフィールドが追加されたら、下記のmap処理を削除
-                const filteredWithSKU = filtered.map((rec, newIdx) => ({
-                    ...rec,
-                    SKU__c: newIdx % 2 === 0 ? '6P' : 'バラ'  // フィルタリング後のインデックスで交互表示
-                }));
-                this.submittedSurveysDataMap[type] = filteredWithSKU;  // TODO: ダミーデータ削除時は filtered に戻す
+                this.submittedSurveysDataMap[type] = filtered;  // フィルタリング後のデータをそのまま使用
                 this.submittedSurveysPageMap[type] = this.submittedSurveysPreviousPageMap?.[type] || 1;
                 this.submittedSurveysTotalPageMap[type] = Math.ceil(filtered.length / PAGE_SIZE);
                 this.submittedSurveysShowPaginationMap[type] = filtered.length > PAGE_SIZE;
