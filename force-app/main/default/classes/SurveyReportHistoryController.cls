@@ -60,7 +60,6 @@ public with sharing class SurveyReportHistoryController {
               AND CALENDAR_YEAR(visitday__c) = :targetYear
               AND CALENDAR_MONTH(visitday__c) = :targetMonth
               AND Id IN (SELECT journal__c FROM StandardSalesFloorSurveyReport__c)
-            ORDER BY visitday__c DESC
             LIMIT 1
         ];
 
