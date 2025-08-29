@@ -52,6 +52,9 @@ public with sharing class SurveyReportHistoryController {
 
         // 3. 顧客IDと年月で定番売場調査レコードを検索
         //    LastModifiedDateも取得し、新しい順に並び替える
+        // 2025年8月29日修正
+        // before: LIMIT 1により1件の日誌のみ取得していた
+        // after: 同月内の全日誌を取得し、すべての定番売場調査レコードを表示
         List<journal__c> journalsInMonth = [
             SELECT Id, LastModifiedDate,
                    (SELECT Id, Name, Product__c, SKU__c, attribute__c, SalesFloorSelection__c, FaceCount__c, LastModifiedDate FROM journals__r ORDER BY LastModifiedDate DESC)
@@ -60,27 +63,35 @@ public with sharing class SurveyReportHistoryController {
               AND CALENDAR_YEAR(visitday__c) = :targetYear
               AND CALENDAR_MONTH(visitday__c) = :targetMonth
               AND Id IN (SELECT journal__c FROM StandardSalesFloorSurveyReport__c)
-            LIMIT 1
+            ORDER BY visitday__c DESC
         ];
 
         // 3. 結果をラッパーオブジェクトに設定
+        // 2025年8月29日修正
+        // before: journalsInMonth[0]から単一日誌のレコードのみ取得
+        // after: 全日誌から定番売場調査レコードを収集
         if (!journalsInMonth.isEmpty()) {
-            List<StandardSalesFloorSurveyReport__c> foundReports = journalsInMonth[0].journals__r;
-            result.surveyReports = foundReports;
-
-            // FaceCount__cに値を持つレコードが1件でも存在するかチェック
-            Boolean hasAnyFaceCount = false;
-            for (StandardSalesFloorSurveyReport__c report : foundReports) {
-                // FaceCount__cがnullでも空文字でもないことを確認
-                if (report.FaceCount__c != null) {
-                    hasAnyFaceCount = true;
-                    break; // 1件でも見つかればループを抜ける
+            List<StandardSalesFloorSurveyReport__c> allReports = new List<StandardSalesFloorSurveyReport__c>();
+            Datetime latestModifiedDate = null;
+            
+            // すべての日誌から定番売場調査レコードを収集
+            for (journal__c journal : journalsInMonth) {
+                allReports.addAll(journal.journals__r);
+                
+                // 最新の更新日時を追跡
+                for (StandardSalesFloorSurveyReport__c report : journal.journals__r) {
+                    if (report.FaceCount__c != null && 
+                        (latestModifiedDate == null || report.LastModifiedDate > latestModifiedDate)) {
+                        latestModifiedDate = report.LastModifiedDate;
+                    }
                 }
             }
-
-            // 1件でもFaceCount__cの入力があれば、最新の更新日をセット
-            if (hasAnyFaceCount) {
-                result.formattedDate = toDateTimeString(foundReports[0].LastModifiedDate);
+            
+            result.surveyReports = allReports;
+            
+            // 最新の更新日をセット
+            if (latestModifiedDate != null) {
+                result.formattedDate = toDateTimeString(latestModifiedDate);
             }
         }
 
