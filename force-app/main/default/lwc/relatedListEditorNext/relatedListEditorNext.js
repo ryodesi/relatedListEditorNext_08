@@ -737,16 +737,23 @@ export default class RelatedListEditor extends LightningElement {
             const isZeroLike = /^0+$/.test(draft.FaceCount__c);
             if (isZeroLike) draft.FaceCount__c = null;
 
+            // 2025年8月29日修正
+            // before: updateRecordの戻り値を使用せず
+            // after: updateRecordの戻り値を利用して部分更新を実現
             return updateRecord({
                 fields: {
                     Id: draft.Id,
                     FaceCount__c: draft.FaceCount__c,
                 }
-            });
+            }).then(updatedRecord => ({
+                updatedRecord,
+                draftId: draft.Id,
+                newValue: draft.FaceCount__c
+            }));
         });
 
         return Promise.all(savePromises)
-            .then(() => {
+            .then((results) => {
                 this.dispatchEvent(new ShowToastEvent({
                     title: '成功',
                     message: '定番売場調査を更新しました。',
@@ -754,6 +761,45 @@ export default class RelatedListEditor extends LightningElement {
                 }));
                 console.log('保存成功 HIT'); // debug
                 let newEditingRecordId = null; // debug
+
+                // 2025年8月29日修正
+                // before: refreshApexで全データを再取得（ソートが発生）
+                // after: 更新したレコードのみをローカルで部分更新（並び順を維持）
+                // 修正理由: フェイス数/コマ数入力時に、更新したレコードが最上部に移動してしまう問題を解決
+                results.forEach(result => {
+                    // 各recordTypeのデータを更新
+                    this.recordTypeKeys.forEach(key => {
+                        this[key] = this[key].map(rec => {
+                            if (rec.Id === result.draftId) {
+                                return {
+                                    ...rec,
+                                    FaceCount__c: result.newValue,
+                                    // updateRecordの戻り値から最新のLastModifiedDateを取得
+                                    LastModifiedDate: result.updatedRecord.fields.LastModifiedDate?.value
+                                };
+                            }
+                            return rec;
+                        });
+                        
+                        // dataMapも同様に更新（ページネーション用）
+                        if (this.dataMap[key]) {
+                            this.dataMap[key] = this.dataMap[key].map(rec => {
+                                if (rec.Id === result.draftId) {
+                                    return {
+                                        ...rec,
+                                        FaceCount__c: result.newValue,
+                                        LastModifiedDate: result.updatedRecord.fields.LastModifiedDate?.value
+                                    };
+                                }
+                                return rec;
+                            });
+                        }
+                    });
+                });
+                
+                // 表示を更新
+                this.recordTypeKeys.forEach(type => this.updatePaginatedRecords(type));
+                
                 this.draftValues = [];
 
                 // 代入
@@ -796,8 +842,12 @@ export default class RelatedListEditor extends LightningElement {
                     this.switchToEditMode(recordIdToRemainEditing);
                 }
 
-                refreshApex(this.wiredDataResult);
-                refreshApex(this.wiredSubmittedSurveysResult);
+                // 2025年8月29日修正
+                // before: refreshApexで全データを再取得していた
+                // after: コメントアウトして部分更新のみに変更
+                // 注意: 他ユーザーの更新は画面リロードまで反映されない
+                // refreshApex(this.wiredDataResult);
+                // refreshApex(this.wiredSubmittedSurveysResult);
 
             })
             .catch(error => {
