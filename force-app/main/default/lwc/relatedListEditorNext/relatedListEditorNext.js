@@ -124,6 +124,9 @@ export default class RelatedListEditor extends LightningElement {
     @track isJournalSubmitted = false; // 日誌が提出済みかどうかを保持
     // 日誌所有者以外のユーザーには非表示とする機能追加
     @track isOwner = false; // 現在のユーザーが日誌の所有者かどうか
+    
+    // モーダルOKボタン押下時の予期しない行選択を防ぐための変数
+    previousFocusedElement = null;
 
     // チェックボックス処理
     // Journal__c のレコードから Account の ID を取得
@@ -181,6 +184,9 @@ export default class RelatedListEditor extends LightningElement {
         this.pendingCheckboxField = event.target.name;
         this.pendingCheckboxValue = event.target.checked;
         this.pendingCheckboxLabel = event.target.label;
+        
+        // モーダルOKボタン押下時に予期しない行選択を防ぐため、現在のフォーカス要素を保存
+        this.previousFocusedElement = document.activeElement;
 
         ExampleModal.open({
             size: 'small',
@@ -191,6 +197,11 @@ export default class RelatedListEditor extends LightningElement {
                 this.handleConfirmCheckboxChange();
             } else {
                 this.handleCancelCheckboxChange();
+            }
+            
+            // モーダル閉じた後、元のフォーカスを復元して予期しない行選択を防ぐ
+            if (this.previousFocusedElement) {
+                this.previousFocusedElement.focus();
             }
         });
     }
@@ -392,8 +403,6 @@ export default class RelatedListEditor extends LightningElement {
             })
             .finally(() => {
                 this.showConfirmModal = false;
-                // 売場なしチェックボックス操作後の予期しない行ハイライトを防ぐため、フォーカスをクリア
-                document.activeElement?.blur();
             });
     }
 
@@ -428,8 +437,6 @@ export default class RelatedListEditor extends LightningElement {
         }
 
         this.showConfirmModal = false;
-        // 売場なしチェックボックス操作後の予期しない行ハイライトを防ぐため、フォーカスをクリア
-        document.activeElement?.blur();
     }
 
 
