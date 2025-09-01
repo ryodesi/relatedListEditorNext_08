@@ -392,6 +392,8 @@ export default class RelatedListEditor extends LightningElement {
             })
             .finally(() => {
                 this.showConfirmModal = false;
+                // 売場なしチェックボックス操作後の予期しない行ハイライトを防ぐため、フォーカスをクリア
+                document.activeElement?.blur();
             });
     }
 
@@ -426,6 +428,8 @@ export default class RelatedListEditor extends LightningElement {
         }
 
         this.showConfirmModal = false;
+        // 売場なしチェックボックス操作後の予期しない行ハイライトを防ぐため、フォーカスをクリア
+        document.activeElement?.blur();
     }
 
 
