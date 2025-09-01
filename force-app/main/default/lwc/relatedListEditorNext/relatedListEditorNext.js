@@ -13,6 +13,9 @@ import TV_EPOP_FIELD from '@salesforce/schema/Account.TV_E_POP__c';
 import POP_FIELD from '@salesforce/schema/Account.POP_precautions__c';
 import JOURNAL_CUSTOMER_FIELD from '@salesforce/schema/journal__c.customer__c'; // ← これが重要
 import JOURNAL_REPORTDONE_FIELD from '@salesforce/schema/journal__c.reportdone__c';
+// 日誌所有者以外のユーザーには非表示とする機能追加
+import userId from '@salesforce/user/Id';
+import JOURNAL_OWNER_FIELD from '@salesforce/schema/journal__c.OwnerId';
 // modal を表示するクラス（親）
 import ExampleModal from 'c/exampleModal';
 // Apexメソッドをインポート
@@ -119,17 +122,22 @@ export default class RelatedListEditor extends LightningElement {
     lastModifiedDateLastMonth = ''; // 先月の定番売場調査レコード最終更新日
 
     @track isJournalSubmitted = false; // 日誌が提出済みかどうかを保持
+    // 日誌所有者以外のユーザーには非表示とする機能追加
+    @track isOwner = false; // 現在のユーザーが日誌の所有者かどうか
 
     // チェックボックス処理
     // Journal__c のレコードから Account の ID を取得
     @wire(getRecord, {
         recordId: '$recordId',
-        fields: [JOURNAL_CUSTOMER_FIELD, JOURNAL_REPORTDONE_FIELD]
+        fields: [JOURNAL_CUSTOMER_FIELD, JOURNAL_REPORTDONE_FIELD, JOURNAL_OWNER_FIELD] // 日誌所有者以外のユーザーには非表示とする機能追加
     })
     wiredJournal({ error, data }) {
         if (data) {
             this.accountId = data.fields.customer__c.value;
             this.isJournalSubmitted = data.fields.reportdone__c.value;
+            // 日誌所有者以外のユーザーには非表示とする機能追加
+            const journalOwnerId = data.fields.OwnerId.value;
+            this.isOwner = (journalOwnerId === userId);
         } else if (error) {
             console.error('Journalレコード取得エラー:', error);
         }
@@ -317,6 +325,16 @@ export default class RelatedListEditor extends LightningElement {
                             this.recordsType4 = this.recordsType4.map(rec => ({ ...rec, FaceCount__c: '' }));
                             this.recordsType5 = this.recordsType5.map(rec => ({ ...rec, FaceCount__c: '' }));
                             this.recordsType6 = this.recordsType6.map(rec => ({ ...rec, FaceCount__c: '' }));
+                            
+                            // 売場なしチェックボックスOFF時に削除された値が復活しないよう、dataMapも更新
+                            ['recordsType3', 'recordsType4', 'recordsType5', 'recordsType6'].forEach(type => {
+                                if (this.dataMap[type]) {
+                                    this.dataMap[type] = this.dataMap[type].map(rec => ({ ...rec, FaceCount__c: '' }));
+                                }
+                            });
+                            
+                            // ページネーションの再描画
+                            this.recordTypeKeys.forEach(type => this.updatePaginatedRecords(type));
                         });
                     }
 
@@ -350,6 +368,16 @@ export default class RelatedListEditor extends LightningElement {
                             this.recordsType8 = this.recordsType8.map(rec => ({ ...rec, FaceCount__c: '' }));
                             this.recordsType9 = this.recordsType9.map(rec => ({ ...rec, FaceCount__c: '' }));
                             this.recordsType10 = this.recordsType10.map(rec => ({ ...rec, FaceCount__c: '' }));
+                            
+                            // 売場なしチェックボックスOFF時に削除された値が復活しないよう、dataMapも更新
+                            ['recordsType7', 'recordsType8', 'recordsType9', 'recordsType10'].forEach(type => {
+                                if (this.dataMap[type]) {
+                                    this.dataMap[type] = this.dataMap[type].map(rec => ({ ...rec, FaceCount__c: '' }));
+                                }
+                            });
+                            
+                            // ページネーションの再描画
+                            this.recordTypeKeys.forEach(type => this.updatePaginatedRecords(type));
                         });
                     }
                 }

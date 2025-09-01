@@ -1,4 +1,6 @@
 <template>
+    <!-- 日誌所有者以外のユーザーには非表示とする機能追加 -->
+    <template if:true={isOwner}>
     <lightning-card title="定番売場調査">
         <lightning-tabset>
             <lightning-tab label="入力">
@@ -954,3 +956,5 @@
         </template>
     </lightning-card>
     </template>
+    <!-- 日誌所有者以外のユーザーには非表示とする機能追加 -->
+</template>
