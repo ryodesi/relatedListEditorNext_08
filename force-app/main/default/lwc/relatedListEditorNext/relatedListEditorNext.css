@@ -15,10 +15,12 @@
 
 .fixed-width-table th:nth-child(1),
 .fixed-width-table td:nth-child(1) {
-    width: 50px;
-    min-width: 50px;
+    /* 行番号が改行されないよう幅を拡大 */
+    width: 70px;        /* 50px → 70px */
+    min-width: 70px;    /* 50px → 70px */
     max-width: 100px;
     text-align: center;
+    white-space: nowrap;
 }
 
 .fixed-width-table th:nth-child(2),
@@ -76,7 +78,9 @@
 
     .fixed-width-table th:first-child,
     .fixed-width-table td:first-child {
-        width: 10%;
+        /* 行番号が改行されないよう幅を拡大 */
+        width: 20%;      /* 15% → 20% */
+        min-width: 50px; /* 40px → 50px */
     }
     
     .fixed-width-table th:nth-child(2),
@@ -91,6 +95,7 @@
     
     .fixed-width-table th:nth-child(4),
     .fixed-width-table td:nth-child(4) {
-        width: 30%;
+        /* 行番号列を広げた分、フェイス数/コマ数列を縮小 */
+        width: 20%;      /* 30% → 20% */
     }
 }

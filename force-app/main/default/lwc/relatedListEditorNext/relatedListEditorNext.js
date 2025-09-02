@@ -13,9 +13,6 @@ import TV_EPOP_FIELD from '@salesforce/schema/Account.TV_E_POP__c';
 import POP_FIELD from '@salesforce/schema/Account.POP_precautions__c';
 import JOURNAL_CUSTOMER_FIELD from '@salesforce/schema/journal__c.customer__c'; // ← これが重要
 import JOURNAL_REPORTDONE_FIELD from '@salesforce/schema/journal__c.reportdone__c';
-// 日誌所有者以外のユーザーには非表示とする機能追加
-import userId from '@salesforce/user/Id';
-import JOURNAL_OWNER_FIELD from '@salesforce/schema/journal__c.OwnerId';
 // modal を表示するクラス（親）
 import ExampleModal from 'c/exampleModal';
 // Apexメソッドをインポート
@@ -122,22 +119,17 @@ export default class RelatedListEditor extends LightningElement {
     lastModifiedDateLastMonth = ''; // 先月の定番売場調査レコード最終更新日
 
     @track isJournalSubmitted = false; // 日誌が提出済みかどうかを保持
-    // 日誌所有者以外のユーザーには非表示とする機能追加
-    @track isOwner = false; // 現在のユーザーが日誌の所有者かどうか
 
     // チェックボックス処理
     // Journal__c のレコードから Account の ID を取得
     @wire(getRecord, {
         recordId: '$recordId',
-        fields: [JOURNAL_CUSTOMER_FIELD, JOURNAL_REPORTDONE_FIELD, JOURNAL_OWNER_FIELD] // 日誌所有者以外のユーザーには非表示とする機能追加
+        fields: [JOURNAL_CUSTOMER_FIELD, JOURNAL_REPORTDONE_FIELD]
     })
     wiredJournal({ error, data }) {
         if (data) {
             this.accountId = data.fields.customer__c.value;
             this.isJournalSubmitted = data.fields.reportdone__c.value;
-            // 日誌所有者以外のユーザーには非表示とする機能追加
-            const journalOwnerId = data.fields.OwnerId.value;
-            this.isOwner = (journalOwnerId === userId);
         } else if (error) {
             console.error('Journalレコード取得エラー:', error);
         }
@@ -604,7 +596,8 @@ export default class RelatedListEditor extends LightningElement {
 
         this[type] = paginatedData.map((rec, idx) => ({
             ...rec,
-            rowIndex: idx + 1,
+            /* ページング時も連番を維持するよう修正 */
+            rowIndex: start + idx + 1,  /* ページ番号を考慮した連番 */
             isEditing: rec.Id === this.currentEditingRecordId // 追加することで保存後にフォーカスが合う
         }));
 
@@ -1210,7 +1203,8 @@ export default class RelatedListEditor extends LightningElement {
 
         this[type] = paginatedData.map((rec, idx) => ({
             ...rec,
-            rowIndex: idx + 1,
+            /* ページング時も連番を維持するよう修正 */
+            rowIndex: start + idx + 1,  /* ページ番号を考慮した連番 */
         }));
     }
 }
