@@ -125,7 +125,8 @@ public with sharing class SurveyReportHistoryController {
 
         List<journal__c> journalsInMonth = [
             SELECT Id, LastModifiedDate,
-                   (SELECT Id, Name, Product__c, SKU__c, attribute__c, SalesFloorSelection__c, FaceCount__c, LastModifiedDate FROM journals__r ORDER BY LastModifiedDate DESC)
+                   /* 手動更新日時を取得し、その日付でソート（システム自動更新を除外） */
+                   (SELECT Id, Name, Product__c, SKU__c, attribute__c, SalesFloorSelection__c, FaceCount__c, LastModifiedDate, LastManualUpdateDate__c FROM journals__r ORDER BY LastManualUpdateDate__c DESC NULLS LAST)
             FROM journal__c
             WHERE customer__c = :accountId
               AND visitday__c < :startOfCurrentMonth
@@ -138,8 +139,12 @@ public with sharing class SurveyReportHistoryController {
         if (!journalsInMonth.isEmpty()) {
             List<StandardSalesFloorSurveyReport__c> foundReports = journalsInMonth[0].journals__r;
             result.surveyReports = foundReports;
-            if(!foundReports.isEmpty()){
-                result.formattedDate = toDateTimeString(foundReports[0].LastModifiedDate);
+            /* 手動更新日時があるレコードの最新日を表示（システム自動更新を除外） */
+            for(StandardSalesFloorSurveyReport__c report : foundReports){
+                if(report.LastManualUpdateDate__c != null){
+                    result.formattedDate = toDateTimeString(report.LastManualUpdateDate__c);
+                    break;
+                }
             }
         }
 

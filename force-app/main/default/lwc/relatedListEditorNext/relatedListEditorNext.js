@@ -301,7 +301,9 @@ export default class RelatedListEditor extends LightningElement {
                                 updateRecord({
                                     fields: {
                                         Id: rec.Id,
-                                        FaceCount__c: ''
+                                        FaceCount__c: '',
+                                        /* 売場なしチェックボックスON時も手動更新日時を記録 */
+                                        LastManualUpdateDate__c: new Date().toISOString()
                                     }
                                 })
                             )
@@ -345,7 +347,9 @@ export default class RelatedListEditor extends LightningElement {
                                 updateRecord({
                                     fields: {
                                         Id: rec.Id,
-                                        FaceCount__c: '' // コマ数も FaceCount__c フィールドで管理されている前提
+                                        FaceCount__c: '', // コマ数も FaceCount__c フィールドで管理されている前提
+                                        /* 売場なしチェックボックスON時も手動更新日時を記録 */
+                                        LastManualUpdateDate__c: new Date().toISOString()
                                     }
                                 })
                             )
@@ -765,6 +769,8 @@ export default class RelatedListEditor extends LightningElement {
                 fields: {
                     Id: draft.Id,
                     FaceCount__c: draft.FaceCount__c,
+                    /* 手動更新日時を記録（システム自動更新を除外するため） */
+                    LastManualUpdateDate__c: new Date().toISOString()
                 }
             }).then(updatedRecord => ({
                 updatedRecord,
