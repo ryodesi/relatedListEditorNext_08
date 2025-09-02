@@ -35,6 +35,9 @@
 
 .fixed-width-table th:nth-child(4){
     text-align: left;
+    /* フェイス数/コマ数のヘッダーが改行されないよう設定 */
+    white-space: nowrap;
+    min-width: 80px;
 }
 .fixed-width-table td:nth-child(4) {
     width: 40%;
