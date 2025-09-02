@@ -96,6 +96,6 @@
     .fixed-width-table th:nth-child(4),
     .fixed-width-table td:nth-child(4) {
         /* 行番号列を広げた分、フェイス数/コマ数列を縮小 */
-        width: 20%;      /* 30% → 20% */
+        width: 25%;      /* 30% → 25% */
     }
 }
