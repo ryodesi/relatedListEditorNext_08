@@ -30,7 +30,7 @@ public with sharing class SurveyReportHistoryController {
      * @param journalId 基準となる月を特定するための日誌ID
      * @return 該当する定番売場調査レコードのリストと、最新の更新日を含むラッパーオブジェクト
      */
-    @AuraEnabled(cacheable=false)
+    @AuraEnabled(cacheable=true)
     public static SurveyHistoryResult getSurveyReportsForJournal(Id accountId, Id journalId) {
         // 戻り値用のラッパーオブジェクトをインスタンス化
         SurveyHistoryResult result = new SurveyHistoryResult();
@@ -104,7 +104,7 @@ public with sharing class SurveyReportHistoryController {
      * @param journalId 基準となる月を特定するための日誌ID
      * @return 該当する定番売場調査レコードのリストと、最新の更新日を含むラッパーオブジェクト
      */
-    @AuraEnabled(cacheable=false)
+    @AuraEnabled(cacheable=true)
     public static SurveyHistoryResult getPreviousMonthSurveyReports(Id accountId, Id journalId) {
         // 戻り値用のラッパーオブジェクトをインスタンス化
         SurveyHistoryResult result = new SurveyHistoryResult();
