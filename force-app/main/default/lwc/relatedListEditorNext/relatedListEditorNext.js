@@ -1120,15 +1120,18 @@ export default class RelatedListEditor extends LightningElement {
     // 前月履歴取得
     @wire(getPreviousMonthSurveyReports, { accountId: '$accountId', journalId: '$recordId'})
     wiredGetSubmitted(result) {
+        // 2025年9月3日修正：結果を最初に保存（入力タブと同じ処理順序に統一）
+        this.wiredSubmittedSurveysResult = result;
+        
         // 2025年9月3日追加：前月履歴も初回リフレッシュ処理
         // 2025年9月3日修正：前月履歴タブ専用のフラグを使用し、フラグをfalseに設定
+        // 保存した結果を使用してrefreshApexを呼び出す
         if (this.isInitialRefreshPrevious && result.data) {
             this.isInitialRefreshPrevious = false;
-            refreshApex(result);
+            refreshApex(this.wiredSubmittedSurveysResult);
         }
         
         if (result.data) {
-            this.wiredSubmittedSurveysResult = result;
             this.submittedError = null;
             const records = result.data.surveyReports.map((record, idx) => ({
                 Id: record.Id,
@@ -1171,7 +1174,7 @@ export default class RelatedListEditor extends LightningElement {
             console.log('wiredGetSubmitted debug error : ', result.error); // debug
             this.submittedError = result.error;
             this.submittedSurveys = null;
-            this.wiredSubmittedSurveysResult = result;
+            // 2025年9月3日修正：結果の保存は既に実行済みのため削除
         }
     }
 
