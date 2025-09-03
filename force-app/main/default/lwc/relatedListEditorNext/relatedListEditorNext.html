@@ -541,9 +541,8 @@
                         <span>直近の報告履歴がありません。</span>
                     </div>
                 </template>
-                <!-- レコードがある場合のみタブセットを表示 -->
-                <template if:true={hasSubmittedRecords}>
-                    <lightning-tabset>
+                <!-- 前月履歴タブ表示修正：hasSubmittedRecords条件を削除してタブセットを常に表示（入力タブと統一） -->
+                <lightning-tabset>
                         <!-- タブセット：冷ケース -->
                         <lightning-tab label="冷ケース">
                             <lightning-tabset>
@@ -939,8 +938,7 @@
                             </lightning-tabset>
                         </lightning-tab>
                     </lightning-tabset>
-                </template>
-                <!-- レコードがない場合はタブセットは表示しない（日付部分のみ表示） -->
+                <!-- エラー表示 -->
                 <template if:true={submittedSurveysError}>
                     <div class="slds-m-around_medium">
                         <span>直近の報告履歴読み込み中にエラーが発生しました</span>
