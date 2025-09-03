@@ -336,10 +336,6 @@ export default class RelatedListEditor extends LightningElement {
                             
                             // ページネーションの再描画
                             this.recordTypeKeys.forEach(type => this.updatePaginatedRecords(type));
-                            
-                            // 2025年9月3日追加：キャッシュ更新通知（冷ケース）
-                            // チェックボックス操作時もキャッシュを無効化
-                            notifyRecordUpdateAvailable([{recordId: this.recordId}]);
                         });
                     }
 
@@ -385,10 +381,6 @@ export default class RelatedListEditor extends LightningElement {
                             
                             // ページネーションの再描画
                             this.recordTypeKeys.forEach(type => this.updatePaginatedRecords(type));
-                            
-                            // 2025年9月3日追加：キャッシュ更新通知（常温定番）
-                            // チェックボックス操作時もキャッシュを無効化
-                            notifyRecordUpdateAvailable([{recordId: this.recordId}]);
                         });
                     }
                 }
@@ -890,14 +882,6 @@ export default class RelatedListEditor extends LightningElement {
                 // 注意: 他ユーザーの更新は画面リロードまで反映されない
                 // refreshApex(this.wiredDataResult);
                 // refreshApex(this.wiredSubmittedSurveysResult);
-                
-                // 2025年9月3日修正
-                // リロード時にキャッシュが更新されない問題を解決
-                // notifyRecordUpdateAvailableを使用してキャッシュを無効化し、
-                // リロード時に最新データが取得できるようにする
-                // この方法により、レコードの並び替え問題を回避しつつ、
-                // キャッシュの問題も解決できる
-                notifyRecordUpdateAvailable([{recordId: this.recordId}]);
 
             })
             .catch(error => {
