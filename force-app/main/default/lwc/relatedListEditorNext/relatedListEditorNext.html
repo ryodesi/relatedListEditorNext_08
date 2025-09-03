@@ -15,9 +15,8 @@
                         <span>直近の報告履歴がありません。</span>
                     </div>
                 </template>
-                <!-- レコードがある場合のみタブセットを表示 -->
-                <template if:true={hasCurrentRecords}>
-                    <lightning-tabset>
+                <!-- 入力タブ表示修正：hasCurrentRecords条件を削除してタブセットを常に表示 -->
+                <lightning-tabset>
                     <!-- タブセット：冷ケース -->
                     <lightning-tab label="冷ケース">
                         <!-- 顧客：冷ケース無し（チェックボックス） -->
@@ -525,7 +524,6 @@
                         </lightning-tabset>
                     </lightning-tab>
                 </lightning-tabset>
-                </template>
             </lightning-tab>
 
             <!-- タブセット：前月履歴タブ -->

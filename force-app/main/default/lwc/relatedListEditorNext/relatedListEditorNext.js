@@ -83,6 +83,13 @@ export default class RelatedListEditor extends LightningElement {
     paginatedMap = {}; // 各recordTypeの表示対象データ
     showPaginationMap = {}; // ページネーション表示制御
     previousPageMap = {}; // 更新時にいたページを保持
+    
+    connectedCallback() {
+        // ページマップを初期化
+        this.recordTypeKeys.forEach(type => {
+            this.pageMap[type] = 1;
+        });
+    }
 
     currentEditingRecordId = null;
     previousEditingRecordId = null;
@@ -535,18 +542,13 @@ export default class RelatedListEditor extends LightningElement {
     @wire(getSurveyReportsForJournal, { accountId: '$accountId', journalId: '$recordId'})
     wiredRelatedList(result) {
         this.wiredDataResult = result; // 結果を保存
+        
+        // accountIdがない場合は処理をスキップ
+        if (!this.accountId) {
+            return;
+        }
+        
         if (result.data) {
-            if (this.isInitialLoad) {
-                this.isInitialLoad = false;
-                // refreshApexを呼び出して、キャッシュを強制的に更新
-                refreshApex(this.wiredDataResult)
-                    .then(() => {
-                        console.log('初期表示時にデータをリフレッシュしました。');
-                    })
-                    .catch(error => {
-                        console.error('初期リフレッシュエラー:', error);
-                    });
-            }
 
             const records = result.data.surveyReports.map((record, idx) => ({
                 Id: record.Id,
@@ -589,13 +591,14 @@ export default class RelatedListEditor extends LightningElement {
             console.error('wiredRelatedList 取得エラー:', result.error);
             console.log('wiredGetSubmitted debug error : ', result.error); // debug
         }
+        
     }
 
     // ページング処理
     updatePaginatedRecords(type) {
         const start = (this.pageMap[type] - 1) * PAGE_SIZE;
         const end = start + PAGE_SIZE;
-        const paginatedData = this.dataMap[type].slice(start, end);
+        const paginatedData = this.dataMap[type] ? this.dataMap[type].slice(start, end) : [];
         const pageRecords = this[type]; // 追加
 
         this[type] = paginatedData.map((rec, idx) => ({
