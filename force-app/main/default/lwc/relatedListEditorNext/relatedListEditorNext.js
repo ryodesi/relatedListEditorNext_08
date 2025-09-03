@@ -89,6 +89,10 @@ export default class RelatedListEditor extends LightningElement {
         this.recordTypeKeys.forEach(type => {
             this.pageMap[type] = 1;
         });
+        
+        // 2025年9月3日追加：コンポーネント初期化時にキャッシュをリフレッシュ
+        // これにより、リロード時に最新データが取得される
+        this.isInitialRefresh = true;
     }
 
     currentEditingRecordId = null;
@@ -545,6 +549,14 @@ export default class RelatedListEditor extends LightningElement {
         
         // accountIdがない場合は処理をスキップ
         if (!this.accountId) {
+            return;
+        }
+        
+        // 2025年9月3日追加：初回リフレッシュ処理
+        // コンポーネント初期化時に一度だけキャッシュをリフレッシュ
+        if (this.isInitialRefresh && result.data) {
+            this.isInitialRefresh = false;
+            refreshApex(this.wiredDataResult);
             return;
         }
         
@@ -1105,6 +1117,11 @@ export default class RelatedListEditor extends LightningElement {
     // 前月履歴取得
     @wire(getPreviousMonthSurveyReports, { accountId: '$accountId', journalId: '$recordId'})
     wiredGetSubmitted(result) {
+        // 2025年9月3日追加：前月履歴も初回リフレッシュ処理
+        if (this.isInitialRefresh && result.data) {
+            refreshApex(result);
+        }
+        
         if (result.data) {
             this.wiredSubmittedSurveysResult = result;
             this.submittedError = null;
