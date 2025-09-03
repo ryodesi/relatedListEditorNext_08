@@ -92,7 +92,10 @@ export default class RelatedListEditor extends LightningElement {
         
         // 2025年9月3日追加：コンポーネント初期化時にキャッシュをリフレッシュ
         // これにより、リロード時に最新データが取得される
-        this.isInitialRefresh = true;
+        // 2025年9月3日修正：入力タブと前月履歴タブで独立したフラグを使用
+        // 両方のタブが確実にリフレッシュされるように修正
+        this.isInitialRefreshCurrent = true;  // 入力タブ用フラグ
+        this.isInitialRefreshPrevious = true; // 前月履歴タブ用フラグ
     }
 
     currentEditingRecordId = null;
@@ -554,8 +557,9 @@ export default class RelatedListEditor extends LightningElement {
         
         // 2025年9月3日追加：初回リフレッシュ処理
         // コンポーネント初期化時に一度だけキャッシュをリフレッシュ
-        if (this.isInitialRefresh && result.data) {
-            this.isInitialRefresh = false;
+        // 2025年9月3日修正：入力タブ専用のフラグを使用
+        if (this.isInitialRefreshCurrent && result.data) {
+            this.isInitialRefreshCurrent = false;
             refreshApex(this.wiredDataResult);
         }
         
@@ -1117,7 +1121,9 @@ export default class RelatedListEditor extends LightningElement {
     @wire(getPreviousMonthSurveyReports, { accountId: '$accountId', journalId: '$recordId'})
     wiredGetSubmitted(result) {
         // 2025年9月3日追加：前月履歴も初回リフレッシュ処理
-        if (this.isInitialRefresh && result.data) {
+        // 2025年9月3日修正：前月履歴タブ専用のフラグを使用し、フラグをfalseに設定
+        if (this.isInitialRefreshPrevious && result.data) {
+            this.isInitialRefreshPrevious = false;
             refreshApex(result);
         }
         
