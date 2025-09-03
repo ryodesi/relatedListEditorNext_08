@@ -525,11 +525,16 @@
 
             <!-- タブセット：前月履歴タブ -->
             <lightning-tab label="前月履歴" value="history">
-                <template if:true={lastModifiedDateLastMonth}>
-                    <div class="slds-m-around_medium">
-                        <strong>最終更新日：</strong>
-                        {lastModifiedDateLastMonth}
-                    </div>
+                <!-- 日付表示とレコード表示を分離：レコードがある場合の表示 -->
+                <template if:true={hasSubmittedRecords}>
+                    <!-- 日付がある場合のみ表示 -->
+                    <template if:true={lastModifiedDateLastMonth}>
+                        <div class="slds-m-around_medium">
+                            <strong>最終更新日：</strong>
+                            {lastModifiedDateLastMonth}
+                        </div>
+                    </template>
+                    <!-- 日付がなくてもタブセットは表示 -->
                     <lightning-tabset>
                         <!-- タブセット：冷ケース -->
                         <lightning-tab label="冷ケース">
@@ -927,7 +932,8 @@
                         </lightning-tab>
                     </lightning-tabset>
                 </template>
-                <template if:false={lastModifiedDateLastMonth}>
+                <!-- 日付表示とレコード表示を分離：レコードがない場合の表示 -->
+                <template if:false={hasSubmittedRecords}>
                     <div class="slds-m-around_medium">
                         <span>直近の報告履歴がありません。</span>
                     </div>

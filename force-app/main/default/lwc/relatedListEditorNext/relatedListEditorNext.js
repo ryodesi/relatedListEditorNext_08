@@ -1151,6 +1151,18 @@ export default class RelatedListEditor extends LightningElement {
         this.dispatchEvent(new ShowToastEvent({ title, message, variant }));
     }
 
+    // 前月履歴レコードの有無を判定（日付表示とレコード表示を分離）
+    get hasSubmittedRecords() {
+        return this.submittedColdBeerRecords.length > 0 ||
+               this.submittedColdRTDRecords.length > 0 ||
+               this.submittedColdOtherAttRecords.length > 0 ||
+               this.submittedColdOtherComRecords.length > 0 ||
+               this.submittedRoomBeerRecords.length > 0 ||
+               this.submittedRoomRTDRecords.length > 0 ||
+               this.submittedRoomOtherAttRecords.length > 0 ||
+               this.submittedRoomOtherComRecords.length > 0;
+    }
+
     // 直近履歴タブ用
     get shouldShowPagination_submittedColdBeer() { return this.shouldShowPagination('submittedColdBeerRecords'); }
     get shouldShowPagination_submittedColdRTD() { return this.shouldShowPagination('submittedColdRTDRecords'); }
