@@ -557,7 +557,6 @@ export default class RelatedListEditor extends LightningElement {
         if (this.isInitialRefresh && result.data) {
             this.isInitialRefresh = false;
             refreshApex(this.wiredDataResult);
-            return;
         }
         
         if (result.data) {
