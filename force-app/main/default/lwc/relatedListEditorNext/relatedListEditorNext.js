@@ -1163,6 +1163,18 @@ export default class RelatedListEditor extends LightningElement {
                this.submittedRoomOtherComRecords.length > 0;
     }
 
+    // 入力タブのレコードの有無を判定（日付表示とレコード表示を分離）
+    get hasCurrentRecords() {
+        return this.recordsType3.length > 0 ||
+               this.recordsType4.length > 0 ||
+               this.recordsType5.length > 0 ||
+               this.recordsType6.length > 0 ||
+               this.recordsType7.length > 0 ||
+               this.recordsType8.length > 0 ||
+               this.recordsType9.length > 0 ||
+               this.recordsType10.length > 0;
+    }
+
     // 直近履歴タブ用
     get shouldShowPagination_submittedColdBeer() { return this.shouldShowPagination('submittedColdBeerRecords'); }
     get shouldShowPagination_submittedColdRTD() { return this.shouldShowPagination('submittedColdRTDRecords'); }

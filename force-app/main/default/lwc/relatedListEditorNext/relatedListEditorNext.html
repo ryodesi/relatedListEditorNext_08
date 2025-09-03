@@ -2,17 +2,23 @@
     <lightning-card title="定番売場調査">
         <lightning-tabset>
             <lightning-tab label="入力">
-                <template if:true={lastModifiedDateThisMonth}>
-                    <div class="slds-m-around_medium">
-                        <strong>最終更新日：</strong>
-                        {lastModifiedDateThisMonth}
-                    </div>
+                <!-- 日付表示とレコード表示を分離：レコードがある場合の表示 -->
+                <template if:true={hasCurrentRecords}>
+                    <!-- 日付がある場合のみ表示 -->
+                    <template if:true={lastModifiedDateThisMonth}>
+                        <div class="slds-m-around_medium">
+                            <strong>最終更新日：</strong>
+                            {lastModifiedDateThisMonth}
+                        </div>
+                    </template>
+                    <!-- 日付がない場合 -->
+                    <template if:false={lastModifiedDateThisMonth}>
+                        <div class="slds-m-around_medium">
+                            <span>直近の報告履歴がありません。</span>
+                        </div>
+                    </template>
                 </template>
-                <template if:false={lastModifiedDateThisMonth}>
-                    <div class="slds-m-around_medium">
-                        <span>直近の報告履歴がありません。</span>
-                    </div>
-                </template>
+                <!-- 日付がなくてもタブセットは表示 -->
                 <lightning-tabset>
                     <!-- タブセット：冷ケース -->
                     <lightning-tab label="冷ケース">
@@ -932,12 +938,7 @@
                         </lightning-tab>
                     </lightning-tabset>
                 </template>
-                <!-- 日付表示とレコード表示を分離：レコードがない場合の表示 -->
-                <template if:false={hasSubmittedRecords}>
-                    <div class="slds-m-around_medium">
-                        <span>直近の報告履歴がありません。</span>
-                    </div>
-                </template>
+                <!-- レコードがない場合は何も表示しない -->
                 <template if:true={submittedSurveysError}>
                     <div class="slds-m-around_medium">
                         <span>直近の報告履歴読み込み中にエラーが発生しました</span>

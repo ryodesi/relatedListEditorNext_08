@@ -78,11 +78,11 @@ public with sharing class SurveyReportHistoryController {
             for (journal__c journal : journalsInMonth) {
                 allReports.addAll(journal.journals__r);
                 
-                // 最新の更新日時を追跡
+                // 手動更新日時が記録されているレコードの中で、最新の更新日を追跡（システム自動更新を除外）
                 for (StandardSalesFloorSurveyReport__c report : journal.journals__r) {
-                    if (report.FaceCount__c != null && 
-                        (latestModifiedDate == null || report.LastModifiedDate > latestModifiedDate)) {
-                        latestModifiedDate = report.LastModifiedDate;
+                    if (report.LastManualUpdateDate__c != null && 
+                        (latestModifiedDate == null || report.LastManualUpdateDate__c > latestModifiedDate)) {
+                        latestModifiedDate = report.LastManualUpdateDate__c;
                     }
                 }
             }
