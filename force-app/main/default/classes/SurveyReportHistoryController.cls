@@ -189,7 +189,7 @@ public with sharing class SurveyReportHistoryController {
                 if (r1.LastModifiedDate == null && r2.LastModifiedDate == null) return 0;
                 if (r1.LastModifiedDate == null) return 1;
                 if (r2.LastModifiedDate == null) return -1;
-                // Datetime型の比較を手動で行う
+                // Datetime型の比較を行う
                 if (r1.LastModifiedDate > r2.LastModifiedDate) return -1;
                 if (r1.LastModifiedDate < r2.LastModifiedDate) return 1;
                 return 0;
@@ -209,7 +209,7 @@ public with sharing class SurveyReportHistoryController {
                 if (r1.LastModifiedDate == null && r2.LastModifiedDate == null) return 0;
                 if (r1.LastModifiedDate == null) return 1;
                 if (r2.LastModifiedDate == null) return -1;
-                // Datetime型の比較を手動で行う
+                // Datetime型の比較を行う
                 if (r1.LastModifiedDate > r2.LastModifiedDate) return -1;
                 if (r1.LastModifiedDate < r2.LastModifiedDate) return 1;
                 return 0;
