@@ -565,13 +565,15 @@ export default class RelatedListEditor extends LightningElement {
         
         if (result.data) {
 
+            // 2025年9月16日修正：SortNumber__cを追加
             const records = result.data.surveyReports.map((record, idx) => ({
                 Id: record.Id,
                 Product__c: record.Product__c,
                 SKU__c: record.SKU__c ?? '',  // 実際のデータを取得
                 FaceCount__c: record.FaceCount__c ?? '',
                 SalesFloorSelection__c: record.SalesFloorSelection__c,
-                attribute__c: record.attribute__c, 
+                attribute__c: record.attribute__c,
+                SortNumber__c: record.SortNumber__c,  // 2025年9月16日追加
                 rowIndex: idx + 1
             }));
 
@@ -1133,6 +1135,7 @@ export default class RelatedListEditor extends LightningElement {
         
         if (result.data) {
             this.submittedError = null;
+            // 2025年9月16日修正：SortNumber__cを追加
             const records = result.data.surveyReports.map((record, idx) => ({
                 Id: record.Id,
                 Product__c: record.Product__c,
@@ -1140,6 +1143,7 @@ export default class RelatedListEditor extends LightningElement {
                 FaceCount__c: record.FaceCount__c,
                 SalesFloorSelection__c: record.SalesFloorSelection__c,
                 attribute__c: record.attribute__c,
+                SortNumber__c: record.SortNumber__c,  // 2025年9月16日追加
                 LastModifiedDate: record.LastModifiedDate,
                 rowIndex: idx + 1
             }));

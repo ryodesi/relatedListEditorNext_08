@@ -55,9 +55,10 @@ public with sharing class SurveyReportHistoryController {
         // 2025年8月29日修正
         // before: LIMIT 1により1件の日誌のみ取得していた
         // after: 同月内の全日誌を取得し、すべての定番売場調査レコードを表示
+        // 2025年9月16日修正：SortNumber__cを追加
         List<journal__c> journalsInMonth = [
             SELECT Id, LastModifiedDate,
-                   (SELECT Id, Name, Product__c, SKU__c, attribute__c, SalesFloorSelection__c, FaceCount__c, LastModifiedDate, LastManualUpdateDate__c FROM journals__r ORDER BY LastModifiedDate DESC)
+                   (SELECT Id, Name, Product__c, SKU__c, attribute__c, SalesFloorSelection__c, FaceCount__c, LastModifiedDate, LastManualUpdateDate__c, SortNumber__c FROM journals__r ORDER BY LastModifiedDate DESC)
             FROM journal__c
             WHERE customer__c = :accountId
               AND CALENDAR_YEAR(visitday__c) = :targetYear
@@ -86,6 +87,10 @@ public with sharing class SurveyReportHistoryController {
                     }
                 }
             }
+            
+            // 2025年9月16日追加：SortNumber__cでソート処理
+            // SortNumber__cがnullの場合は最後に配置し、同じ値の場合はLastModifiedDateで降順ソート
+            allReports.sort(new SurveyReportComparator());
             
             result.surveyReports = allReports;
             
@@ -123,9 +128,10 @@ public with sharing class SurveyReportHistoryController {
         // 基準日の「当月の1日」を取得 (例: 2025-02-15 -> 2025-02-01)
         Date startOfCurrentMonth = referenceDate.toStartOfMonth();
 
+        // 2025年9月16日修正：SortNumber__cを追加
         List<journal__c> journalsInMonth = [
             SELECT Id, LastModifiedDate,
-                   (SELECT Id, Name, Product__c, SKU__c, attribute__c, SalesFloorSelection__c, FaceCount__c, LastModifiedDate, LastManualUpdateDate__c FROM journals__r ORDER BY LastModifiedDate DESC)
+                   (SELECT Id, Name, Product__c, SKU__c, attribute__c, SalesFloorSelection__c, FaceCount__c, LastModifiedDate, LastManualUpdateDate__c, SortNumber__c FROM journals__r ORDER BY LastModifiedDate DESC)
             FROM journal__c
             WHERE customer__c = :accountId
               AND visitday__c < :startOfCurrentMonth
@@ -137,6 +143,11 @@ public with sharing class SurveyReportHistoryController {
         // 3. 結果をラッパーオブジェクトに設定
         if (!journalsInMonth.isEmpty()) {
             List<StandardSalesFloorSurveyReport__c> foundReports = journalsInMonth[0].journals__r;
+            
+            // 2025年9月16日追加：SortNumber__cでソート処理
+            // SortNumber__cがnullの場合は最後に配置し、同じ値の場合はLastModifiedDateで降順ソート
+            foundReports.sort(new SurveyReportComparator());
+            
             result.surveyReports = foundReports;
             /* 手動更新日時があるレコードの最新日を表示（システム自動更新を除外） */
             for(StandardSalesFloorSurveyReport__c report : foundReports){
@@ -161,5 +172,35 @@ public with sharing class SurveyReportHistoryController {
             return '';
         }
         return dt.format('yyyy年MM月dd日', 'Asia/Tokyo');
+    }
+    
+    /**
+     * 2025年9月16日追加：SortNumber__cによるソート処理
+     * @description 定番売場調査レコードをSortNumber__cでソートするためのComparatorクラス
+     * SortNumber__cがnullの場合は最後に配置し、同じ値の場合はLastModifiedDateで降順ソート
+     */
+    public class SurveyReportComparator implements Comparator<StandardSalesFloorSurveyReport__c> {
+        public Integer compare(StandardSalesFloorSurveyReport__c r1, StandardSalesFloorSurveyReport__c r2) {
+            // NULL値を最後に配置
+            if (r1.SortNumber__c == null && r2.SortNumber__c != null) return 1;
+            if (r1.SortNumber__c != null && r2.SortNumber__c == null) return -1;
+            if (r1.SortNumber__c == null && r2.SortNumber__c == null) {
+                // 両方NULLの場合はLastModifiedDateで比較（降順）
+                if (r1.LastModifiedDate == null && r2.LastModifiedDate == null) return 0;
+                if (r1.LastModifiedDate == null) return 1;
+                if (r2.LastModifiedDate == null) return -1;
+                return r2.LastModifiedDate.compareTo(r1.LastModifiedDate);
+            }
+            // SortNumber__cで比較（昇順）
+            Integer result = r1.SortNumber__c.compareTo(r2.SortNumber__c);
+            if (result == 0) {
+                // 同じ値の場合はLastModifiedDateで比較（降順）
+                if (r1.LastModifiedDate == null && r2.LastModifiedDate == null) return 0;
+                if (r1.LastModifiedDate == null) return 1;
+                if (r2.LastModifiedDate == null) return -1;
+                return r2.LastModifiedDate.compareTo(r1.LastModifiedDate);
+            }
+            return result;
+        }
     }
 }
