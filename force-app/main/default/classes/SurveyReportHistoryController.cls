@@ -189,16 +189,30 @@ public with sharing class SurveyReportHistoryController {
                 if (r1.LastModifiedDate == null && r2.LastModifiedDate == null) return 0;
                 if (r1.LastModifiedDate == null) return 1;
                 if (r2.LastModifiedDate == null) return -1;
-                return r2.LastModifiedDate.compareTo(r1.LastModifiedDate);
+                // Datetime型の比較を手動で行う
+                if (r1.LastModifiedDate > r2.LastModifiedDate) return -1;
+                if (r1.LastModifiedDate < r2.LastModifiedDate) return 1;
+                return 0;
             }
             // SortNumber__cで比較（昇順）
-            Integer result = r1.SortNumber__c.compareTo(r2.SortNumber__c);
+            Integer result;
+            if (r1.SortNumber__c > r2.SortNumber__c) {
+                result = 1;
+            } else if (r1.SortNumber__c < r2.SortNumber__c) {
+                result = -1;
+            } else {
+                result = 0;
+            }
+            
             if (result == 0) {
                 // 同じ値の場合はLastModifiedDateで比較（降順）
                 if (r1.LastModifiedDate == null && r2.LastModifiedDate == null) return 0;
                 if (r1.LastModifiedDate == null) return 1;
                 if (r2.LastModifiedDate == null) return -1;
-                return r2.LastModifiedDate.compareTo(r1.LastModifiedDate);
+                // Datetime型の比較を手動で行う
+                if (r1.LastModifiedDate > r2.LastModifiedDate) return -1;
+                if (r1.LastModifiedDate < r2.LastModifiedDate) return 1;
+                return 0;
             }
             return result;
         }
