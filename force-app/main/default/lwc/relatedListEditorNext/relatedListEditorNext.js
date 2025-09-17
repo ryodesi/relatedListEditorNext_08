@@ -649,47 +649,88 @@ export default class RelatedListEditor extends LightningElement {
         }
     }
 
+    // 2025年9月17日修正：前月履歴タブのページング機能を修正
+    // 前月履歴タブ（submittedで始まるtype）の場合は専用のマップとメソッドを使用
     handleFirstPage(event) {
         const type = event.target.dataset.type;
-        this.pageMap[type] = 1;
-        this.updatePaginatedRecords(type);
+        // 前月履歴タブの判定
+        if (type.startsWith('submitted')) {
+            this.submittedSurveysPageMap[type] = 1;
+            this.updateSubmittedSurveysPaginatedRecords(type);
+        } else {
+            this.pageMap[type] = 1;
+            this.updatePaginatedRecords(type);
+        }
     }
 
     handlePrevPage(event) {
         const type = event.target.dataset.type;
-        if (this.pageMap[type] > 1) {
-            this.pageMap[type]--;
-            this.updatePaginatedRecords(type);
+        // 前月履歴タブの判定
+        if (type.startsWith('submitted')) {
+            if (this.submittedSurveysPageMap[type] > 1) {
+                this.submittedSurveysPageMap[type]--;
+                this.updateSubmittedSurveysPaginatedRecords(type);
+            }
+        } else {
+            if (this.pageMap[type] > 1) {
+                this.pageMap[type]--;
+                this.updatePaginatedRecords(type);
+            }
         }
     }
 
     handleNextPage(event) {
         const type = event.target.dataset.type;
-        if (this.pageMap[type] < this.totalPageMap[type]) {
-            this.pageMap[type]++;
-            this.updatePaginatedRecords(type);
+        // 前月履歴タブの判定
+        if (type.startsWith('submitted')) {
+            if (this.submittedSurveysPageMap[type] < this.submittedSurveysTotalPageMap[type]) {
+                this.submittedSurveysPageMap[type]++;
+                this.updateSubmittedSurveysPaginatedRecords(type);
+            }
+        } else {
+            if (this.pageMap[type] < this.totalPageMap[type]) {
+                this.pageMap[type]++;
+                this.updatePaginatedRecords(type);
+            }
         }
     }
 
     handleLastPage(event) {
         const type = event.target.dataset.type;
-        this.pageMap[type] = this.totalPageMap[type];
-        this.updatePaginatedRecords(type);
+        // 前月履歴タブの判定
+        if (type.startsWith('submitted')) {
+            this.submittedSurveysPageMap[type] = this.submittedSurveysTotalPageMap[type];
+            this.updateSubmittedSurveysPaginatedRecords(type);
+        } else {
+            this.pageMap[type] = this.totalPageMap[type];
+            this.updatePaginatedRecords(type);
+        }
     }
 
     getPaginated(type) {
         return this.paginatedMap[type] || [];
     }
 
+    // 2025年9月17日修正：前月履歴タブのページング機能を修正
+    // 前月履歴タブの場合は専用のマップを参照
     getCurrentPage(type) {
+        if (type.startsWith('submitted')) {
+            return this.submittedSurveysPageMap[type] || 1;
+        }
         return this.pageMap[type] || 1;
     }
 
     getTotalPages(type) {
+        if (type.startsWith('submitted')) {
+            return this.submittedSurveysTotalPageMap[type] || 1;
+        }
         return this.totalPageMap[type] || 1;
     }
 
     shouldShowPagination(type) {
+        if (type.startsWith('submitted')) {
+            return this.submittedSurveysShowPaginationMap[type] || false;
+        }
         return this.showPaginationMap[type] || false;
     }
 
