@@ -286,28 +286,31 @@ private class SurveyReportHistoryControllerTest {
         System.assert(result4 > 0, 'SortNumber__cがNULLの場合は後に来るべき');
         
         // 同じSortNumber__cの場合はLastModifiedDateで降順
-        // 新しいレコードを作成してテスト
+        // まず2つのレコードを作成
         StandardSalesFloorSurveyReport__c reportOlder = new StandardSalesFloorSurveyReport__c(
             Name = 'Test Report Older',
             journal__c = testJournal.Id,
-            SortNumber__c = 3
+            SortNumber__c = 3,
+            FaceCount__c = 1
         );
-        insert reportOlder;
-        
-        // 時間をおいて新しいレコードを作成
         StandardSalesFloorSurveyReport__c reportNewer = new StandardSalesFloorSurveyReport__c(
             Name = 'Test Report Newer', 
             journal__c = testJournal.Id,
-            SortNumber__c = 3
+            SortNumber__c = 3,
+            FaceCount__c = 1
         );
-        insert reportNewer;
+        insert new List<StandardSalesFloorSurveyReport__c>{reportOlder, reportNewer};
         
-        // レコードを取得
+        // reportNewerをUpdateしてLastModifiedDateを更新
+        reportNewer.FaceCount__c = 2;
+        update reportNewer;
+        
+        // レコードを再取得してLastModifiedDateを含める
         StandardSalesFloorSurveyReport__c olderRecord = [SELECT Id, SortNumber__c, LastModifiedDate FROM StandardSalesFloorSurveyReport__c WHERE Id = :reportOlder.Id];
         StandardSalesFloorSurveyReport__c newerRecord = [SELECT Id, SortNumber__c, LastModifiedDate FROM StandardSalesFloorSurveyReport__c WHERE Id = :reportNewer.Id];
         
         Integer result5 = comparator.compare(newerRecord, olderRecord);
-        System.assert(result5 < 0, '同じSortNumber__cの場合、新しい方が先に来るべき');
+        System.assert(result5 < 0, '同じSortNumber__cの場合、Updateで新しくした方が先に来るべき');
         
         // 両方のSortNumber__cとLastModifiedDateがnullの場合（メモリ上のオブジェクトで検証）
         StandardSalesFloorSurveyReport__c reportBothNull1 = new StandardSalesFloorSurveyReport__c(
@@ -343,29 +346,65 @@ private class SurveyReportHistoryControllerTest {
         System.assert(result10 > 0, 'SortNumber__cが両方nullの場合、LastModifiedDateがnullの方が後に来るべき');
     }
     
-    // --- 複数月にまたがるデータのテスト ---
+    // --- 同月の複数日誌からの全レコード取得テスト ---
     @isTest
     static void testGetSurveyReports_MultipleJournalsInMonth() {
         // 【シナリオ】同月に複数の日誌があり、すべての調査レコードが取得される
         Account acc = [SELECT Id FROM Account LIMIT 1];
         
-        // 同月の複数日誌を作成
-        journal__c journal1 = createJournal(acc.Id, Date.today());
-        journal__c journal2 = createJournal(acc.Id, Date.today().addDays(7));
-        journal__c journal3 = createJournal(acc.Id, Date.today().addDays(14));
+        // 同じ月の固定日付を使用（月境界の問題を避ける）
+        Date sameMonth = Date.today().toStartOfMonth().addDays(10);
         
-        // 各日誌にレポートを紐付け（SortNumber__c付き）
-        // journal1: 2件（SortNumber: 3, 1） 
-        // journal2: 2件（SortNumber: 2, 5） - nullの代わりに5を使用
-        // journal3: 1件（SortNumber: 4）
-        // 合計: 5件
-        createSurveyReportWithSort(journal1.Id, 2, 5, new List<Decimal>{3, 1});
-        createSurveyReportWithSort(journal2.Id, 2, 10, new List<Decimal>{2, 5});
-        createSurveyReportWithSort(journal3.Id, 1, 15, new List<Decimal>{4});
+        // 基準となる日誌を作成
+        journal__c baseJournal = createJournal(acc.Id, sameMonth);
+        
+        // 同月の他の日誌を作成
+        journal__c journal1 = createJournal(acc.Id, sameMonth.addDays(1));
+        journal__c journal2 = createJournal(acc.Id, sameMonth.addDays(2));
+        
+        // 各日誌に確実にレポートを紐付け（親に最低1件は子を付ける）
+        List<StandardSalesFloorSurveyReport__c> allReports = new List<StandardSalesFloorSurveyReport__c>();
+        
+        // journal1: 3件
+        allReports.add(new StandardSalesFloorSurveyReport__c(
+            Name = 'Report1-1',
+            journal__c = journal1.Id,
+            SortNumber__c = 1,
+            FaceCount__c = 10
+        ));
+        allReports.add(new StandardSalesFloorSurveyReport__c(
+            Name = 'Report1-2',
+            journal__c = journal1.Id,
+            SortNumber__c = 3,
+            FaceCount__c = 10
+        ));
+        allReports.add(new StandardSalesFloorSurveyReport__c(
+            Name = 'Report1-3',
+            journal__c = journal1.Id,
+            SortNumber__c = 5,
+            FaceCount__c = 10
+        ));
+        
+        // journal2: 2件
+        allReports.add(new StandardSalesFloorSurveyReport__c(
+            Name = 'Report2-1',
+            journal__c = journal2.Id,
+            SortNumber__c = 2,
+            FaceCount__c = 20
+        ));
+        allReports.add(new StandardSalesFloorSurveyReport__c(
+            Name = 'Report2-2',
+            journal__c = journal2.Id,
+            SortNumber__c = 4,
+            FaceCount__c = 20
+        ));
+        
+        // 一括で挿入
+        insert allReports;
         
         Test.startTest();
         SurveyReportHistoryController.SurveyHistoryResult result = 
-            SurveyReportHistoryController.getSurveyReportsForJournal(acc.Id, journal1.Id);
+            SurveyReportHistoryController.getSurveyReportsForJournal(acc.Id, baseJournal.Id);
         Test.stopTest();
         
         // Assert
@@ -376,12 +415,12 @@ private class SurveyReportHistoryControllerTest {
         if (result.surveyReports.size() != 5) {
             System.debug('実際の件数: ' + result.surveyReports.size());
             for (StandardSalesFloorSurveyReport__c report : result.surveyReports) {
-                System.debug('Report: ' + report.Name + ', SortNumber: ' + report.SortNumber__c);
+                System.debug('Report: ' + report.Name + ', SortNumber: ' + report.SortNumber__c + ', Journal: ' + report.journal__c);
             }
         }
         
         // 5件のレコードが返ることを確認
-        System.assertEquals(5, result.surveyReports.size(), '全日誌から5件のレポートが返るべき');
+        System.assertEquals(5, result.surveyReports.size(), '同月内の全日誌から合計5件のレポートが返るべき');
         System.assert(String.isNotBlank(result.formattedDate), '日付が設定されるべき');
         
         // ソート順の確認（SortNumber__c: 1, 2, 3, 4, 5）
