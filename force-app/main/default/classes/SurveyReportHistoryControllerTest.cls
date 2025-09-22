@@ -108,9 +108,26 @@ private class SurveyReportHistoryControllerTest {
         // 【シナリオ】前月の最新日誌に紐づくレポートが取得できる
         // Arrange
         Account acc = [SELECT Id FROM Account LIMIT 1];
-        journal__c referenceJournal = createJournal(acc.Id, Date.today());
-        // 前々月の日誌を作成し、レポートを3件紐付ける
-        journal__c prevMonthJournal = createJournal(acc.Id, Date.today().addMonths(-1));
+        
+        // テスト用に現在の日付を基準とする
+        Date currentDate = Date.today();
+        Date prevMonthDate = currentDate.addMonths(-1);
+        
+        // まず現在の日誌を作成
+        journal__c referenceJournal = createJournal(acc.Id, currentDate);
+        
+        // 前月の日誌を作成（訪問日は現在日にして、後でテスト用に更新）
+        journal__c prevMonthJournal = new journal__c(
+            customer__c = acc.Id,
+            visitday__c = currentDate  // 一旦現在日で作成
+        );
+        insert prevMonthJournal;
+        
+        // テストコンテキストで過去日付に更新
+        Test.setCreatedDate(prevMonthJournal.Id, prevMonthDate);
+        prevMonthJournal.visitday__c = prevMonthDate;
+        update prevMonthJournal;
+        
         createSurveyReport(prevMonthJournal.Id, 3, 5);
 
         Test.startTest();
@@ -126,9 +143,26 @@ private class SurveyReportHistoryControllerTest {
     static void testGetPreviousMonthReports_Success2() {
         // 【シナリオ】前々月の最新日誌に紐づくレポートが取得できる
         Account acc = [SELECT Id FROM Account LIMIT 1];
-        journal__c referenceJournal = createJournal(acc.Id, Date.today());
-        // 前々月の日誌を作成し、レポートを3件紐付ける
-        journal__c prevMonthJournal = createJournal(acc.Id, Date.today().addMonths(-2));
+        
+        // テスト用に現在の日付を基準とする
+        Date currentDate = Date.today();
+        Date prevPrevMonthDate = currentDate.addMonths(-2);
+        
+        // まず現在の日誌を作成
+        journal__c referenceJournal = createJournal(acc.Id, currentDate);
+        
+        // 前々月の日誌を作成（訪問日は現在日にして、後でテスト用に更新）
+        journal__c prevMonthJournal = new journal__c(
+            customer__c = acc.Id,
+            visitday__c = currentDate  // 一旦現在日で作成
+        );
+        insert prevMonthJournal;
+        
+        // テストコンテキストで過去日付に更新
+        Test.setCreatedDate(prevMonthJournal.Id, prevPrevMonthDate);
+        prevMonthJournal.visitday__c = prevPrevMonthDate;
+        update prevMonthJournal;
+        
         createSurveyReport(prevMonthJournal.Id, 3, 5);
 
         Test.startTest();
@@ -191,6 +225,84 @@ private class SurveyReportHistoryControllerTest {
         String nullResult = SurveyReportHistoryController.toDateTimeString(null);
         System.assertEquals('', nullResult, 'nullを渡した場合は空文字が返るべき');
     }
+    
+    // --- SurveyReportComparator クラスのテスト ---
+    @isTest
+    static void testSurveyReportComparator() {
+        // 基本的な昇順ソートのテスト
+        SurveyReportHistoryController.SurveyReportComparator comparator = new SurveyReportHistoryController.SurveyReportComparator();
+        
+        StandardSalesFloorSurveyReport__c report1 = new StandardSalesFloorSurveyReport__c(
+            SortNumber__c = 1,
+            LastModifiedDate = Datetime.now()
+        );
+        StandardSalesFloorSurveyReport__c report2 = new StandardSalesFloorSurveyReport__c(
+            SortNumber__c = 2,
+            LastModifiedDate = Datetime.now()
+        );
+        
+        // 1 < 2 なので負の値が返るべき
+        Integer result1 = comparator.compare(report1, report2);
+        System.assert(result1 < 0, 'SortNumber__c = 1 は 2 より前に来るべき');
+        
+        // 2 > 1 なので正の値が返るべき
+        Integer result2 = comparator.compare(report2, report1);
+        System.assert(result2 > 0, 'SortNumber__c = 2 は 1 より後に来るべき');
+        
+        // NULL値は最後に配置
+        StandardSalesFloorSurveyReport__c reportNull = new StandardSalesFloorSurveyReport__c(
+            SortNumber__c = null,
+            LastModifiedDate = Datetime.now()
+        );
+        
+        Integer result3 = comparator.compare(report1, reportNull);
+        System.assert(result3 < 0, 'SortNumber__cがある場合はNULLより前に来るべき');
+        
+        Integer result4 = comparator.compare(reportNull, report1);
+        System.assert(result4 > 0, 'SortNumber__cがNULLの場合は後に来るべき');
+        
+        // 同じSortNumber__cの場合はLastModifiedDateで降順
+        StandardSalesFloorSurveyReport__c report1Old = new StandardSalesFloorSurveyReport__c(
+            SortNumber__c = 1,
+            LastModifiedDate = Datetime.now().addDays(-1)
+        );
+        
+        Integer result5 = comparator.compare(report1, report1Old);
+        System.assert(result5 < 0, '同じSortNumber__cの場合、新しい方が先に来るべき');
+    }
+    
+    // --- 複数月にまたがるデータのテスト ---
+    @isTest
+    static void testGetSurveyReports_MultipleJournalsInMonth() {
+        // 【シナリオ】同月に複数の日誌があり、すべての調査レコードが取得される
+        Account acc = [SELECT Id FROM Account LIMIT 1];
+        
+        // 同月の複数日誌を作成
+        journal__c journal1 = createJournal(acc.Id, Date.today());
+        journal__c journal2 = createJournal(acc.Id, Date.today().addDays(7));
+        journal__c journal3 = createJournal(acc.Id, Date.today().addDays(14));
+        
+        // 各日誌にレポートを紐付け（SortNumber__c付き）
+        createSurveyReportWithSort(journal1.Id, 2, 5, new List<Decimal>{3, 1});
+        createSurveyReportWithSort(journal2.Id, 2, 10, new List<Decimal>{2, null});
+        createSurveyReportWithSort(journal3.Id, 1, 15, new List<Decimal>{4});
+        
+        Test.startTest();
+        SurveyReportHistoryController.SurveyHistoryResult result = 
+            SurveyReportHistoryController.getSurveyReportsForJournal(acc.Id, journal1.Id);
+        Test.stopTest();
+        
+        // Assert
+        System.assertEquals(5, result.surveyReports.size(), '全日誌から5件のレポートが返るべき');
+        System.assert(String.isNotBlank(result.formattedDate), '日付が設定されるべき');
+        
+        // ソート順の確認（SortNumber__c: 1, 2, 3, 4, null）
+        System.assertEquals(1, result.surveyReports[0].SortNumber__c, '1番目はSortNumber__c = 1');
+        System.assertEquals(2, result.surveyReports[1].SortNumber__c, '2番目はSortNumber__c = 2');
+        System.assertEquals(3, result.surveyReports[2].SortNumber__c, '3番目はSortNumber__c = 3');
+        System.assertEquals(4, result.surveyReports[3].SortNumber__c, '4番目はSortNumber__c = 4');
+        System.assertEquals(null, result.surveyReports[4].SortNumber__c, '5番目はSortNumber__c = null');
+    }
 
 
     // --- テストデータ作成用のヘルパーメソッド ---
@@ -206,13 +318,48 @@ private class SurveyReportHistoryControllerTest {
     private static List<StandardSalesFloorSurveyReport__c> createSurveyReport(Id journalId, Integer count, Decimal faceCount) {
         List<StandardSalesFloorSurveyReport__c> reports = new List<StandardSalesFloorSurveyReport__c>();
         for (Integer i = 0; i < count; i++) {
-            reports.add(new StandardSalesFloorSurveyReport__c(
+            StandardSalesFloorSurveyReport__c report = new StandardSalesFloorSurveyReport__c(
                 Name = 'テスト調査レポート ' + i,
                 journal__c = journalId,
                 FaceCount__c = faceCount
-            ));
+            );
+            reports.add(report);
         }
         insert reports;
+        
+        // FaceCountがある場合、LastManualUpdateDate__cを設定
+        if (faceCount != null) {
+            for (StandardSalesFloorSurveyReport__c report : reports) {
+                report.LastManualUpdateDate__c = Datetime.now();
+            }
+            update reports;
+        }
+        
+        return reports;
+    }
+    
+    // SortNumber__c付きでレポートを作成するヘルパーメソッド
+    private static List<StandardSalesFloorSurveyReport__c> createSurveyReportWithSort(Id journalId, Integer count, Decimal faceCount, List<Decimal> sortNumbers) {
+        List<StandardSalesFloorSurveyReport__c> reports = new List<StandardSalesFloorSurveyReport__c>();
+        for (Integer i = 0; i < count; i++) {
+            StandardSalesFloorSurveyReport__c report = new StandardSalesFloorSurveyReport__c(
+                Name = 'テスト調査レポート ' + i,
+                journal__c = journalId,
+                FaceCount__c = faceCount,
+                SortNumber__c = (sortNumbers != null && i < sortNumbers.size()) ? sortNumbers[i] : null
+            );
+            reports.add(report);
+        }
+        insert reports;
+        
+        // FaceCountがある場合、LastManualUpdateDate__cを設定
+        if (faceCount != null) {
+            for (StandardSalesFloorSurveyReport__c report : reports) {
+                report.LastManualUpdateDate__c = Datetime.now();
+            }
+            update reports;
+        }
+        
         return reports;
     }
 }
