@@ -235,7 +235,19 @@ private class SurveyReportHistoryControllerTest {
     @isTest
     static void testSurveyReportComparator() {
         // 前提（未来日の親で入力規則回避）
-        Account acct = new Account(Name='A'); 
+        // 販売店レコードタイプを持つAccountを作成
+        Id LiquorStoreRecordTypeId;
+        try {
+            LiquorStoreRecordTypeId = Schema.getGlobalDescribe().get('Account').getDescribe().getRecordTypeInfosByDeveloperName().get('LiquorStore').getRecordTypeId();
+        } catch (Exception e) {
+            // レコードタイプが存在しない場合は、デフォルトを使用
+            LiquorStoreRecordTypeId = null;
+        }
+        
+        Account acct = new Account(
+            Name = 'A',
+            RecordTypeId = LiquorStoreRecordTypeId
+        ); 
         insert acct;
         Date futureDay = Date.today().addMonths(6);
         journal__c j = new journal__c(Name='j', customer__c=acct.Id, visitday__c=futureDay);
