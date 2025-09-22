@@ -345,8 +345,8 @@ private class SurveyReportHistoryControllerTest {
         System.debug('r1の最初の更新時刻: ' + r1Time);
 
         // ★ 重要：必ず SOQL で"両方"を再取得してから比較に使う
-        r1 = [SELECT Id, SortNumber__c, LastModifiedDate, Name FROM StandardSalesFloorSurveyReport__c WHERE Id = :r1.Id];
-        r2 = [SELECT Id, SortNumber__c, LastModifiedDate, Name FROM StandardSalesFloorSurveyReport__c WHERE Id = :r2.Id];
+        r1 = [SELECT Id, SortNumber__c, LastModifiedDate, Name, FaceCount__c FROM StandardSalesFloorSurveyReport__c WHERE Id = :r1.Id];
+        r2 = [SELECT Id, SortNumber__c, LastModifiedDate, Name, FaceCount__c FROM StandardSalesFloorSurveyReport__c WHERE Id = :r2.Id];
         
         // デバッグ情報を追加
         System.debug('r1: Name=' + r1.Name + ', LastModifiedDate=' + r1.LastModifiedDate);
