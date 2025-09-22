@@ -1,5 +1,18 @@
 @isTest
 private class SurveyReportHistoryControllerTest {
+    
+    // Queueableクラス定義（testSurveyReportComparatorで使用）
+    private class UpdateSSRQueue implements Queueable {
+        Id recId;
+        UpdateSSRQueue(Id id){ recId = id; }
+        public void execute(QueueableContext ctx){
+            // 必ず値が変わる更新で LastModifiedDate を進める
+            StandardSalesFloorSurveyReport__c r =
+                [SELECT Id, FaceCount__c FROM StandardSalesFloorSurveyReport__c WHERE Id = :recId LIMIT 1];
+            r.FaceCount__c = (r.FaceCount__c == null) ? 1 : r.FaceCount__c + 1;
+            update r;
+        }
+    }
 
     // 各テストメソッドで共通して使用する顧客レコードを作成
     @TestSetup
@@ -305,44 +318,38 @@ private class SurveyReportHistoryControllerTest {
         
         // 同じ SortNumber__c の2件を作成
         StandardSalesFloorSurveyReport__c r1 = new StandardSalesFloorSurveyReport__c(
-            Name='Report Same 1', journal__c=j.Id, SortNumber__c=10, FaceCount__c=1);
+            Name='A', journal__c=j.Id, SortNumber__c=10, FaceCount__c=0);
         StandardSalesFloorSurveyReport__c r2 = new StandardSalesFloorSurveyReport__c(
-            Name='Report Same 2', journal__c=j.Id, SortNumber__c=10, FaceCount__c=1);
+            Name='B', journal__c=j.Id, SortNumber__c=10, FaceCount__c=0);
         insert new List<StandardSalesFloorSurveyReport__c>{ r1, r2 };
 
-        // 先に r1 を更新
-        r1.FaceCount__c = 2;
+        // ① まず r1 を同期更新（時刻の"1段目"を作る）
+        r1.FaceCount__c = 5;
         update r1;
 
-        // Test.startTestで区切ってから r2 を更新（時間差を作る）
+        // ② r2 を Queueable で更新（stopTest 時に実行 → r1 より新しくなる想定）
         Test.startTest();
-        r2.FaceCount__c = 3;
-        update r2;
+        System.enqueueJob(new UpdateSSRQueue(r2.Id));
         Test.stopTest();
 
-        // 再取得して比較
+        // ③ 念押しで r2 をもう一度だけ同期更新（r2 を確実に最新に）
+        r2 = [SELECT Id, FaceCount__c FROM StandardSalesFloorSurveyReport__c WHERE Id = :r2.Id];
+        r2.FaceCount__c = r2.FaceCount__c + 1;
+        update r2;
+
+        // ★ 重要：必ず SOQL で"両方"を再取得してから比較に使う
         r1 = [SELECT Id, SortNumber__c, LastModifiedDate FROM StandardSalesFloorSurveyReport__c WHERE Id = :r1.Id];
         r2 = [SELECT Id, SortNumber__c, LastModifiedDate FROM StandardSalesFloorSurveyReport__c WHERE Id = :r2.Id];
-        
-        // デバッグ情報を詳細に出力
-        System.debug('r1.Id=' + r1.Id);
-        System.debug('r1.SortNumber__c=' + r1.SortNumber__c);
-        System.debug('r1.LastModifiedDate=' + r1.LastModifiedDate);
-        System.debug('r2.Id=' + r2.Id);
-        System.debug('r2.SortNumber__c=' + r2.SortNumber__c);
-        System.debug('r2.LastModifiedDate=' + r2.LastModifiedDate);
-        
-        // LastModifiedDateが異なることを確認（デバッグ用）
-        if (r1.LastModifiedDate == r2.LastModifiedDate) {
-            System.debug('WARNING: LastModifiedDateが同じです。r1=' + r1.LastModifiedDate + ', r2=' + r2.LastModifiedDate);
-        } else {
-            System.debug('LastModifiedDateは異なります。差=' + (r2.LastModifiedDate.getTime() - r1.LastModifiedDate.getTime()) + 'ms');
-        }
 
-        // 同じSortNumber__cの場合、新しい方（r2）が先に来るべき
-        Integer result5 = comparator.compare(r2, r1);
-        System.debug('comparator.compare(r2, r1)の結果=' + result5);
-        System.assert(result5 < 0, '同じSortNumber__cの場合、新しい方（r2）が先に来るべき。実際の結果=' + result5);
+        // デバッグ用：本当に r2 の方が新しいか確認
+        System.assert(r2.LastModifiedDate > r1.LastModifiedDate,
+            '準備段階：r2 の LastModifiedDate を r1 より新しくできていない');
+
+        // ソートして検証
+        List<StandardSalesFloorSurveyReport__c> listToSort = new List<StandardSalesFloorSurveyReport__c>{ r1, r2 };
+        listToSort.sort(new SurveyReportHistoryController.SurveyReportComparator());
+        System.assertEquals(r2.Id, listToSort[0].Id,
+            '同じSortNumber__cの場合、新しい方（r2）が先に来るべき');
         
         // 両方のSortNumber__cとLastModifiedDateがnullの場合（メモリ上のオブジェクトで検証）
         StandardSalesFloorSurveyReport__c reportBothNull1 = new StandardSalesFloorSurveyReport__c(
