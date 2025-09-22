@@ -65,15 +65,19 @@ private class SurveyReportHistoryControllerTest {
 
     @isTest
     static void testGetSurveyReports_NoMatchingData() {
-        // 【シナリオ】指定した月に日誌が存在しない
+        // 【シナリオ】指定した月に定番売場調査レコードを持つ日誌が存在しない
         Account acc = [SELECT Id FROM Account LIMIT 1];
+        // 参照日誌を作成
         journal__c referenceJournal = createJournal(acc.Id, Date.today());
+        // 同月に別の日誌を作成するが、定番売場調査レコードは紐付けない
+        journal__c emptyJournal = createJournal(acc.Id, Date.today().addDays(5));
 
         Test.startTest();
         SurveyReportHistoryController.SurveyHistoryResult result = SurveyReportHistoryController.getSurveyReportsForJournal(acc.Id, referenceJournal.Id);
         Test.stopTest();
 
         System.assertEquals(0, result.surveyReports.size(), '条件に合う日誌がないため、結果は0件であるべき');
+        System.assertEquals('', result.formattedDate, '日付も空文字であるべき');
     }
 
     @isTest
@@ -269,6 +273,47 @@ private class SurveyReportHistoryControllerTest {
         
         Integer result5 = comparator.compare(report1, report1Old);
         System.assert(result5 < 0, '同じSortNumber__cの場合、新しい方が先に来るべき');
+        
+        // 両方のSortNumber__cとLastModifiedDateがnullの場合
+        StandardSalesFloorSurveyReport__c reportBothNull1 = new StandardSalesFloorSurveyReport__c(
+            SortNumber__c = null,
+            LastModifiedDate = null
+        );
+        StandardSalesFloorSurveyReport__c reportBothNull2 = new StandardSalesFloorSurveyReport__c(
+            SortNumber__c = null,
+            LastModifiedDate = null
+        );
+        
+        Integer result6 = comparator.compare(reportBothNull1, reportBothNull2);
+        System.assertEquals(0, result6, '両方NULLの場合は0が返るべき');
+        
+        // SortNumber__cが同じで、片方のLastModifiedDateがnullの場合
+        StandardSalesFloorSurveyReport__c report1ModNull = new StandardSalesFloorSurveyReport__c(
+            SortNumber__c = 1,
+            LastModifiedDate = null
+        );
+        
+        Integer result7 = comparator.compare(report1, report1ModNull);
+        System.assert(result7 < 0, '同じSortNumber__cで、LastModifiedDateがある方が先に来るべき');
+        
+        Integer result8 = comparator.compare(report1ModNull, report1);
+        System.assert(result8 > 0, '同じSortNumber__cで、LastModifiedDateがnullの方が後に来るべき');
+        
+        // SortNumber__cがnullで、片方のLastModifiedDateもnullの場合
+        StandardSalesFloorSurveyReport__c reportNullWithDate = new StandardSalesFloorSurveyReport__c(
+            SortNumber__c = null,
+            LastModifiedDate = Datetime.now()
+        );
+        StandardSalesFloorSurveyReport__c reportNullWithoutDate = new StandardSalesFloorSurveyReport__c(
+            SortNumber__c = null,
+            LastModifiedDate = null
+        );
+        
+        Integer result9 = comparator.compare(reportNullWithDate, reportNullWithoutDate);
+        System.assert(result9 < 0, 'SortNumber__cが両方nullの場合、LastModifiedDateがある方が先に来るべき');
+        
+        Integer result10 = comparator.compare(reportNullWithoutDate, reportNullWithDate);
+        System.assert(result10 > 0, 'SortNumber__cが両方nullの場合、LastModifiedDateがnullの方が後に来るべき');
     }
     
     // --- 複数月にまたがるデータのテスト ---
@@ -303,7 +348,104 @@ private class SurveyReportHistoryControllerTest {
         System.assertEquals(4, result.surveyReports[3].SortNumber__c, '4番目はSortNumber__c = 4');
         System.assertEquals(null, result.surveyReports[4].SortNumber__c, '5番目はSortNumber__c = null');
     }
+    
+    // --- journalIdがnullの場合のテスト ---
+    @isTest
+    static void testGetSurveyReports_JournalIdNull() {
+        // 【シナリオ】日誌IDがnull
+        Account acc = [SELECT Id FROM Account LIMIT 1];
 
+        Test.startTest();
+        SurveyReportHistoryController.SurveyHistoryResult result = SurveyReportHistoryController.getSurveyReportsForJournal(acc.Id, null);
+        Test.stopTest();
+
+        System.assertEquals(0, result.surveyReports.size(), '日誌IDがnullの場合、結果は0件であるべき');
+        System.assertEquals('', result.formattedDate, '日付も空文字であるべき');
+    }
+    
+    @isTest
+    static void testGetPreviousMonthReports_JournalIdNull() {
+        // 【シナリオ】日誌IDがnull
+        Account acc = [SELECT Id FROM Account LIMIT 1];
+
+        Test.startTest();
+        SurveyReportHistoryController.SurveyHistoryResult result = SurveyReportHistoryController.getPreviousMonthSurveyReports(acc.Id, null);
+        Test.stopTest();
+
+        System.assertEquals(0, result.surveyReports.size(), '日誌IDがnullの場合、結果は0件であるべき');
+        System.assertEquals('', result.formattedDate, '日付も空文字であるべき');
+    }
+    
+    // --- LastManualUpdateDate__cがすべてnullの場合のテスト ---
+    @isTest
+    static void testGetSurveyReports_AllLastManualUpdateDateNull() {
+        // 【シナリオ】レポートは存在するがLastManualUpdateDate__cがすべてnull
+        Account acc = [SELECT Id FROM Account LIMIT 1];
+        journal__c referenceJournal = createJournal(acc.Id, Date.today());
+        journal__c targetJournal = createJournal(acc.Id, Date.today().addDays(1));
+        
+        // LastManualUpdateDate__cをnullのままにするため、faceCountをnullで作成
+        createSurveyReport(targetJournal.Id, 3, null);
+
+        Test.startTest();
+        SurveyReportHistoryController.SurveyHistoryResult result = SurveyReportHistoryController.getSurveyReportsForJournal(acc.Id, referenceJournal.Id);
+        Test.stopTest();
+
+        System.assertEquals(3, result.surveyReports.size(), 'レポートは3件返るべき');
+        System.assertEquals('', result.formattedDate, 'LastManualUpdateDate__cがすべてnullのため、日付は空文字であるべき');
+    }
+    
+    @isTest
+    static void testGetPreviousMonthReports_AllLastManualUpdateDateNull() {
+        // 【シナリオ】前月レポートでLastManualUpdateDate__cがすべてnull
+        Account acc = [SELECT Id FROM Account LIMIT 1];
+        
+        Date currentDate = Date.today();
+        Date prevMonthDate = currentDate.addMonths(-1);
+        
+        journal__c referenceJournal = createJournal(acc.Id, currentDate);
+        
+        // 前月の日誌を作成
+        journal__c prevMonthJournal = new journal__c(
+            customer__c = acc.Id,
+            visitday__c = currentDate
+        );
+        insert prevMonthJournal;
+        
+        Test.setCreatedDate(prevMonthJournal.Id, prevMonthDate);
+        prevMonthJournal.visitday__c = prevMonthDate;
+        update prevMonthJournal;
+        
+        // LastManualUpdateDate__cをnullのままにするため、faceCountをnullで作成
+        createSurveyReport(prevMonthJournal.Id, 2, null);
+
+        Test.startTest();
+        SurveyReportHistoryController.SurveyHistoryResult result = SurveyReportHistoryController.getPreviousMonthSurveyReports(acc.Id, referenceJournal.Id);
+        Test.stopTest();
+
+        System.assertEquals(2, result.surveyReports.size(), '前月の日誌に紐づく2件のレポートが返るべき');
+        System.assertEquals('', result.formattedDate, 'LastManualUpdateDate__cがすべてnullのため、日付は空文字であるべき');
+    }
+
+
+    // --- SortNumber__cが同じでLastModifiedDateも同じ場合のテスト ---
+    @isTest
+    static void testSurveyReportComparator_SameEverything() {
+        SurveyReportHistoryController.SurveyReportComparator comparator = new SurveyReportHistoryController.SurveyReportComparator();
+        
+        Datetime sameTime = Datetime.now();
+        StandardSalesFloorSurveyReport__c report1 = new StandardSalesFloorSurveyReport__c(
+            SortNumber__c = 5,
+            LastModifiedDate = sameTime
+        );
+        StandardSalesFloorSurveyReport__c report2 = new StandardSalesFloorSurveyReport__c(
+            SortNumber__c = 5,
+            LastModifiedDate = sameTime
+        );
+        
+        Integer result = comparator.compare(report1, report2);
+        System.assertEquals(0, result, '完全に同じ値の場合は0が返るべき');
+    }
 
     // --- テストデータ作成用のヘルパーメソッド ---
     private static journal__c createJournal(Id accountId, Date visitDay) {
