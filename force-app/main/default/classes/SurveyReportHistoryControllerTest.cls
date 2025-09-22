@@ -302,8 +302,11 @@ private class SurveyReportHistoryControllerTest {
         insert new List<StandardSalesFloorSurveyReport__c>{reportOlder, reportNewer};
         
         // reportNewerをUpdateしてLastModifiedDateを更新
+        // テストフレームワークでCPU時間を消費して時刻に差を作る
+        Test.startTest();
         reportNewer.FaceCount__c = 2;
         update reportNewer;
+        Test.stopTest();
         
         // レコードを再取得してLastModifiedDateを含める
         StandardSalesFloorSurveyReport__c olderRecord = [SELECT Id, SortNumber__c, LastModifiedDate FROM StandardSalesFloorSurveyReport__c WHERE Id = :reportOlder.Id];
@@ -352,15 +355,22 @@ private class SurveyReportHistoryControllerTest {
         // 【シナリオ】同月に複数の日誌があり、すべての調査レコードが取得される
         Account acc = [SELECT Id FROM Account LIMIT 1];
         
-        // 同じ月の固定日付を使用（月境界の問題を避ける）
-        Date sameMonth = Date.today().toStartOfMonth().addDays(10);
+        // 未来日で同じ月の日付を使用（過去日入力規則を回避）
+        Date futureMonth;
+        if (Date.today().day() <= 20) {
+            // 今月の20日以前の場合は、今月の25日を使用
+            futureMonth = Date.today().toStartOfMonth().addDays(24);
+        } else {
+            // 今月の21日以降の場合は、来月の10日を使用
+            futureMonth = Date.today().toStartOfMonth().addMonths(1).addDays(9);
+        }
         
         // 基準となる日誌を作成
-        journal__c baseJournal = createJournal(acc.Id, sameMonth);
+        journal__c baseJournal = createJournal(acc.Id, futureMonth);
         
         // 同月の他の日誌を作成
-        journal__c journal1 = createJournal(acc.Id, sameMonth.addDays(1));
-        journal__c journal2 = createJournal(acc.Id, sameMonth.addDays(2));
+        journal__c journal1 = createJournal(acc.Id, futureMonth.addDays(1));
+        journal__c journal2 = createJournal(acc.Id, futureMonth.addDays(2));
         
         // 各日誌に確実にレポートを紐付け（親に最低1件は子を付ける）
         List<StandardSalesFloorSurveyReport__c> allReports = new List<StandardSalesFloorSurveyReport__c>();
