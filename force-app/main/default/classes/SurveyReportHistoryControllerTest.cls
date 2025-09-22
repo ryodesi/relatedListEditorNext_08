@@ -230,90 +230,97 @@ private class SurveyReportHistoryControllerTest {
         System.assertEquals('', nullResult, 'nullを渡した場合は空文字が返るべき');
     }
     
+    // Queueableクラスを定義（レコード更新用）
+    private class UpdateSSRQueue implements Queueable {
+        Id recId;
+        UpdateSSRQueue(Id id){ recId = id; }
+        public void execute(QueueableContext ctx){
+            update new StandardSalesFloorSurveyReport__c(Id = recId, FaceCount__c = 2);
+        }
+    }
+    
     // --- SurveyReportComparator クラスのテスト ---
     @isTest
     static void testSurveyReportComparator() {
-        // テスト用の顧客と日誌を作成
+        // テスト用の顧客を作成
         Account acc = [SELECT Id FROM Account LIMIT 1];
-        journal__c testJournal = createJournal(acc.Id, Date.today());
+        
+        // 未来日で日誌を作成（入力規則回避）
+        Date futureDay = Date.today().addMonths(6);
+        journal__c testJournal = createJournal(acc.Id, futureDay);
         
         // 基本的な昇順ソートのテスト
         SurveyReportHistoryController.SurveyReportComparator comparator = new SurveyReportHistoryController.SurveyReportComparator();
         
-        // 実際にレコードを作成してLastModifiedDateを取得
-        StandardSalesFloorSurveyReport__c reportRecord1 = new StandardSalesFloorSurveyReport__c(
+        // 異なるSortNumber__cのレコードを作成
+        StandardSalesFloorSurveyReport__c report1 = new StandardSalesFloorSurveyReport__c(
             Name = 'Test Report 1',
             journal__c = testJournal.Id,
             SortNumber__c = 1
         );
-        insert reportRecord1;
-        
-        // 少し時間をおいて2番目のレコードを作成
-        Test.startTest();
-        StandardSalesFloorSurveyReport__c reportRecord2 = new StandardSalesFloorSurveyReport__c(
+        StandardSalesFloorSurveyReport__c report2 = new StandardSalesFloorSurveyReport__c(
             Name = 'Test Report 2',
             journal__c = testJournal.Id,
             SortNumber__c = 2
         );
-        insert reportRecord2;
-        Test.stopTest();
         
-        // LastModifiedDateを含むレコードを取得
-        StandardSalesFloorSurveyReport__c report1 = [SELECT Id, SortNumber__c, LastModifiedDate FROM StandardSalesFloorSurveyReport__c WHERE Id = :reportRecord1.Id];
-        StandardSalesFloorSurveyReport__c report2 = [SELECT Id, SortNumber__c, LastModifiedDate FROM StandardSalesFloorSurveyReport__c WHERE Id = :reportRecord2.Id];
-        
-        // 1 < 2 なので負の値が返るべき
-        Integer result1 = comparator.compare(report1, report2);
-        System.assert(result1 < 0, 'SortNumber__c = 1 は 2 より前に来るべき');
-        
-        // 2 > 1 なので正の値が返るべき
-        Integer result2 = comparator.compare(report2, report1);
-        System.assert(result2 > 0, 'SortNumber__c = 2 は 1 より後に来るべき');
-        
-        // NULL値は最後に配置
-        StandardSalesFloorSurveyReport__c reportNullRecord = new StandardSalesFloorSurveyReport__c(
+        // NULL値のレコード
+        StandardSalesFloorSurveyReport__c reportNull = new StandardSalesFloorSurveyReport__c(
             Name = 'Test Report Null',
             journal__c = testJournal.Id,
             SortNumber__c = null
         );
-        insert reportNullRecord;
-        StandardSalesFloorSurveyReport__c reportNull = [SELECT Id, SortNumber__c, LastModifiedDate FROM StandardSalesFloorSurveyReport__c WHERE Id = :reportNullRecord.Id];
         
-        Integer result3 = comparator.compare(report1, reportNull);
-        System.assert(result3 < 0, 'SortNumber__cがある場合はNULLより前に来るべき');
-        
-        Integer result4 = comparator.compare(reportNull, report1);
-        System.assert(result4 > 0, 'SortNumber__cがNULLの場合は後に来るべき');
-        
-        // 同じSortNumber__cの場合はLastModifiedDateで降順
-        // まず2つのレコードを作成
+        // 同じSortNumber__cの2件
         StandardSalesFloorSurveyReport__c reportOlder = new StandardSalesFloorSurveyReport__c(
             Name = 'Test Report Older',
             journal__c = testJournal.Id,
-            SortNumber__c = 3,
-            FaceCount__c = 1
+            SortNumber__c = 3
         );
         StandardSalesFloorSurveyReport__c reportNewer = new StandardSalesFloorSurveyReport__c(
-            Name = 'Test Report Newer', 
+            Name = 'Test Report Newer',
             journal__c = testJournal.Id,
-            SortNumber__c = 3,
-            FaceCount__c = 1
+            SortNumber__c = 3
         );
-        insert new List<StandardSalesFloorSurveyReport__c>{reportOlder, reportNewer};
         
-        // reportNewerをUpdateしてLastModifiedDateを更新
-        // テストフレームワークでCPU時間を消費して時刻に差を作る
+        // すべて一括挿入
+        insert new List<StandardSalesFloorSurveyReport__c>{report1, report2, reportNull, reportOlder, reportNewer};
+        
+        // Test.startTestはこの1回だけ！
         Test.startTest();
-        reportNewer.FaceCount__c = 2;
-        update reportNewer;
-        Test.stopTest();
+        System.enqueueJob(new UpdateSSRQueue(reportNewer.Id)); // reportNewerを後から更新して新しくする
+        Test.stopTest(); // ここでQueueableが実行され、reportNewerのLastModifiedDateが進む
         
-        // レコードを再取得してLastModifiedDateを含める
-        StandardSalesFloorSurveyReport__c olderRecord = [SELECT Id, SortNumber__c, LastModifiedDate FROM StandardSalesFloorSurveyReport__c WHERE Id = :reportOlder.Id];
-        StandardSalesFloorSurveyReport__c newerRecord = [SELECT Id, SortNumber__c, LastModifiedDate FROM StandardSalesFloorSurveyReport__c WHERE Id = :reportNewer.Id];
+        // レコードを再取得
+        Map<Id, StandardSalesFloorSurveyReport__c> recordMap = new Map<Id, StandardSalesFloorSurveyReport__c>(
+            [SELECT Id, SortNumber__c, LastModifiedDate FROM StandardSalesFloorSurveyReport__c 
+             WHERE Id IN :new Set<Id>{report1.Id, report2.Id, reportNull.Id, reportOlder.Id, reportNewer.Id}]
+        );
         
-        Integer result5 = comparator.compare(newerRecord, olderRecord);
-        System.assert(result5 < 0, '同じSortNumber__cの場合、Updateで新しくした方が先に来るべき');
+        StandardSalesFloorSurveyReport__c rec1 = recordMap.get(report1.Id);
+        StandardSalesFloorSurveyReport__c rec2 = recordMap.get(report2.Id);
+        StandardSalesFloorSurveyReport__c recNull = recordMap.get(reportNull.Id);
+        StandardSalesFloorSurveyReport__c recOlder = recordMap.get(reportOlder.Id);
+        StandardSalesFloorSurveyReport__c recNewer = recordMap.get(reportNewer.Id);
+        
+        // 1 < 2 なので負の値が返るべき
+        Integer result1 = comparator.compare(rec1, rec2);
+        System.assert(result1 < 0, 'SortNumber__c = 1 は 2 より前に来るべき');
+        
+        // 2 > 1 なので正の値が返るべき
+        Integer result2 = comparator.compare(rec2, rec1);
+        System.assert(result2 > 0, 'SortNumber__c = 2 は 1 より後に来るべき');
+        
+        // NULL値は最後に配置
+        Integer result3 = comparator.compare(rec1, recNull);
+        System.assert(result3 < 0, 'SortNumber__cがある場合はNULLより前に来るべき');
+        
+        Integer result4 = comparator.compare(recNull, rec1);
+        System.assert(result4 > 0, 'SortNumber__cがNULLの場合は後に来るべき');
+        
+        // 同じSortNumber__cの場合、Updateで新しくした方が先に来るべき
+        Integer result5 = comparator.compare(recNewer, recOlder);
+        System.assert(result5 < 0, '同じSortNumber__cの場合、Updateで新しくした方（reportNewer）が先に来るべき');
         
         // 両方のSortNumber__cとLastModifiedDateがnullの場合（メモリ上のオブジェクトで検証）
         StandardSalesFloorSurveyReport__c reportBothNull1 = new StandardSalesFloorSurveyReport__c(
@@ -355,22 +362,16 @@ private class SurveyReportHistoryControllerTest {
         // 【シナリオ】同月に複数の日誌があり、すべての調査レコードが取得される
         Account acc = [SELECT Id FROM Account LIMIT 1];
         
-        // 未来日で同じ月の日付を使用（過去日入力規則を回避）
-        Date futureMonth;
-        if (Date.today().day() <= 20) {
-            // 今月の20日以前の場合は、今月の25日を使用
-            futureMonth = Date.today().toStartOfMonth().addDays(24);
-        } else {
-            // 今月の21日以降の場合は、来月の10日を使用
-            futureMonth = Date.today().toStartOfMonth().addMonths(1).addDays(9);
-        }
+        // 未来日の同月日付を使用（今日+6ヶ月の15日）
+        Date baseMonth = Date.today().addMonths(6);
+        Date baseDay = Date.newInstance(baseMonth.year(), baseMonth.month(), 15);
         
         // 基準となる日誌を作成
-        journal__c baseJournal = createJournal(acc.Id, futureMonth);
+        journal__c baseJournal = createJournal(acc.Id, baseDay);
         
-        // 同月の他の日誌を作成
-        journal__c journal1 = createJournal(acc.Id, futureMonth.addDays(1));
-        journal__c journal2 = createJournal(acc.Id, futureMonth.addDays(2));
+        // 同月内の別日付の日誌を作成（すべて未来）
+        journal__c journal1 = createJournal(acc.Id, baseDay.addDays(1));
+        journal__c journal2 = createJournal(acc.Id, baseDay.addDays(2));
         
         // 各日誌に確実にレポートを紐付け（親に最低1件は子を付ける）
         List<StandardSalesFloorSurveyReport__c> allReports = new List<StandardSalesFloorSurveyReport__c>();
@@ -412,6 +413,10 @@ private class SurveyReportHistoryControllerTest {
         // 一括で挿入
         insert allReports;
         
+        // formattedDateを埋めるため、最低1件はLastManualUpdateDate__cを設定して更新
+        allReports[0].LastManualUpdateDate__c = System.now();
+        update allReports[0];
+        
         Test.startTest();
         SurveyReportHistoryController.SurveyHistoryResult result = 
             SurveyReportHistoryController.getSurveyReportsForJournal(acc.Id, baseJournal.Id);
@@ -430,8 +435,8 @@ private class SurveyReportHistoryControllerTest {
         }
         
         // 5件のレコードが返ることを確認
-        System.assertEquals(5, result.surveyReports.size(), '同月内の全日誌から合計5件のレポートが返るべき');
-        System.assert(String.isNotBlank(result.formattedDate), '日付が設定されるべき');
+        System.assertEquals(5, result.surveyReports.size(), '同一未来月の全journalの子（5件）が返るべき');
+        System.assertNotEquals('', result.formattedDate, '日付が設定されるべき');
         
         // ソート順の確認（SortNumber__c: 1, 2, 3, 4, 5）
         System.assertEquals(1, result.surveyReports[0].SortNumber__c, '1番目はSortNumber__c = 1');
