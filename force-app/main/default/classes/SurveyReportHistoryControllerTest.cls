@@ -231,23 +231,28 @@ private class SurveyReportHistoryControllerTest {
     }
     
     // Queueableクラスを定義（レコード更新用）
-    private class UpdateSSRQueue implements Queueable {
+    private class _UpdateSSRQueue implements Queueable {
         Id recId;
-        UpdateSSRQueue(Id id){ recId = id; }
+        _UpdateSSRQueue(Id id){ recId = id; }
         public void execute(QueueableContext ctx){
-            update new StandardSalesFloorSurveyReport__c(Id = recId, FaceCount__c = 2);
+            // r2を"必ず値が変わる"ように更新
+            StandardSalesFloorSurveyReport__c r2 =
+                [SELECT Id, FaceCount__c FROM StandardSalesFloorSurveyReport__c WHERE Id = :recId LIMIT 1];
+            Integer v = (r2.FaceCount__c == null) ? 1 : Integer.valueOf(r2.FaceCount__c) + 1;
+            r2.FaceCount__c = v;
+            update r2;
         }
     }
     
     // --- SurveyReportComparator クラスのテスト ---
     @isTest
     static void testSurveyReportComparator() {
-        // テスト用の顧客を作成
-        Account acc = [SELECT Id FROM Account LIMIT 1];
-        
-        // 未来日で日誌を作成（入力規則回避）
+        // 前提（未来日の親で入力規則回避）
+        Account acct = new Account(Name='A'); 
+        insert acct;
         Date futureDay = Date.today().addMonths(6);
-        journal__c testJournal = createJournal(acc.Id, futureDay);
+        journal__c j = new journal__c(Name='j', customer__c=acct.Id, visitday__c=futureDay);
+        insert j;
         
         // 基本的な昇順ソートのテスト
         SurveyReportHistoryController.SurveyReportComparator comparator = new SurveyReportHistoryController.SurveyReportComparator();
@@ -255,53 +260,34 @@ private class SurveyReportHistoryControllerTest {
         // 異なるSortNumber__cのレコードを作成
         StandardSalesFloorSurveyReport__c report1 = new StandardSalesFloorSurveyReport__c(
             Name = 'Test Report 1',
-            journal__c = testJournal.Id,
+            journal__c = j.Id,
             SortNumber__c = 1
         );
         StandardSalesFloorSurveyReport__c report2 = new StandardSalesFloorSurveyReport__c(
             Name = 'Test Report 2',
-            journal__c = testJournal.Id,
+            journal__c = j.Id,
             SortNumber__c = 2
         );
         
         // NULL値のレコード
         StandardSalesFloorSurveyReport__c reportNull = new StandardSalesFloorSurveyReport__c(
             Name = 'Test Report Null',
-            journal__c = testJournal.Id,
+            journal__c = j.Id,
             SortNumber__c = null
         );
         
-        // 同じSortNumber__cの2件
-        StandardSalesFloorSurveyReport__c reportOlder = new StandardSalesFloorSurveyReport__c(
-            Name = 'Test Report Older',
-            journal__c = testJournal.Id,
-            SortNumber__c = 3
-        );
-        StandardSalesFloorSurveyReport__c reportNewer = new StandardSalesFloorSurveyReport__c(
-            Name = 'Test Report Newer',
-            journal__c = testJournal.Id,
-            SortNumber__c = 3
-        );
-        
         // すべて一括挿入
-        insert new List<StandardSalesFloorSurveyReport__c>{report1, report2, reportNull, reportOlder, reportNewer};
-        
-        // Test.startTestはこの1回だけ！
-        Test.startTest();
-        System.enqueueJob(new UpdateSSRQueue(reportNewer.Id)); // reportNewerを後から更新して新しくする
-        Test.stopTest(); // ここでQueueableが実行され、reportNewerのLastModifiedDateが進む
+        insert new List<StandardSalesFloorSurveyReport__c>{report1, report2, reportNull};
         
         // レコードを再取得
         Map<Id, StandardSalesFloorSurveyReport__c> recordMap = new Map<Id, StandardSalesFloorSurveyReport__c>(
             [SELECT Id, SortNumber__c, LastModifiedDate FROM StandardSalesFloorSurveyReport__c 
-             WHERE Id IN :new Set<Id>{report1.Id, report2.Id, reportNull.Id, reportOlder.Id, reportNewer.Id}]
+             WHERE Id IN :new Set<Id>{report1.Id, report2.Id, reportNull.Id}]
         );
         
         StandardSalesFloorSurveyReport__c rec1 = recordMap.get(report1.Id);
         StandardSalesFloorSurveyReport__c rec2 = recordMap.get(report2.Id);
         StandardSalesFloorSurveyReport__c recNull = recordMap.get(reportNull.Id);
-        StandardSalesFloorSurveyReport__c recOlder = recordMap.get(reportOlder.Id);
-        StandardSalesFloorSurveyReport__c recNewer = recordMap.get(reportNewer.Id);
         
         // 1 < 2 なので負の値が返るべき
         Integer result1 = comparator.compare(rec1, rec2);
@@ -318,9 +304,33 @@ private class SurveyReportHistoryControllerTest {
         Integer result4 = comparator.compare(recNull, rec1);
         System.assert(result4 > 0, 'SortNumber__cがNULLの場合は後に来るべき');
         
-        // 同じSortNumber__cの場合、Updateで新しくした方が先に来るべき
-        Integer result5 = comparator.compare(recNewer, recOlder);
-        System.assert(result5 < 0, '同じSortNumber__cの場合、Updateで新しくした方（reportNewer）が先に来るべき');
+        // 同じ SortNumber__c の2件
+        StandardSalesFloorSurveyReport__c r1 = new StandardSalesFloorSurveyReport__c(
+            Name='A', journal__c=j.Id, SortNumber__c=10, FaceCount__c=0);
+        StandardSalesFloorSurveyReport__c r2 = new StandardSalesFloorSurveyReport__c(
+            Name='B', journal__c=j.Id, SortNumber__c=10, FaceCount__c=0);
+        insert new List<StandardSalesFloorSurveyReport__c>{ r1, r2 };
+
+        // ① 先に r1 を同期更新（ここで一段目の時刻）
+        r1.FaceCount__c = 5;  // 値が変わる更新
+        update r1;
+
+        // ② r2 を Queueable で非同期更新（stopTest で実行 → r1 より"確実に"新しくなる）
+        Test.startTest();
+        System.enqueueJob(new _UpdateSSRQueue(r2.Id));
+        Test.stopTest();
+
+        // 再取得して実際に時刻差が付いているかを明示チェック（デバッグ用）
+        r1 = [SELECT Id, LastModifiedDate FROM StandardSalesFloorSurveyReport__c WHERE Id = :r1.Id];
+        r2 = [SELECT Id, LastModifiedDate FROM StandardSalesFloorSurveyReport__c WHERE Id = :r2.Id];
+        System.assert(r2.LastModifiedDate > r1.LastModifiedDate,
+            '準備段階：r2 の LastModifiedDate を r1 より新しくできていない');
+
+        // 並べ替え検証
+        List<StandardSalesFloorSurveyReport__c> listToSort = new List<StandardSalesFloorSurveyReport__c>{ r1, r2 };
+        listToSort.sort(new SurveyReportHistoryController.SurveyReportComparator());
+        System.assertEquals(r2.Id, listToSort[0].Id,
+            '同じSortNumber__cの場合、Updateで新しくした方（reportNewer=r2）が先に来るべき');
         
         // 両方のSortNumber__cとLastModifiedDateがnullの場合（メモリ上のオブジェクトで検証）
         StandardSalesFloorSurveyReport__c reportBothNull1 = new StandardSalesFloorSurveyReport__c(
