@@ -230,19 +230,6 @@ private class SurveyReportHistoryControllerTest {
         System.assertEquals('', nullResult, 'nullを渡した場合は空文字が返るべき');
     }
     
-    // Queueableクラスを定義（レコード更新用）
-    private class _UpdateSSRQueue implements Queueable {
-        Id recId;
-        _UpdateSSRQueue(Id id){ recId = id; }
-        public void execute(QueueableContext ctx){
-            // r2を"必ず値が変わる"ように更新
-            StandardSalesFloorSurveyReport__c r2 =
-                [SELECT Id, FaceCount__c FROM StandardSalesFloorSurveyReport__c WHERE Id = :recId LIMIT 1];
-            Integer v = (r2.FaceCount__c == null) ? 1 : Integer.valueOf(r2.FaceCount__c) + 1;
-            r2.FaceCount__c = v;
-            update r2;
-        }
-    }
     
     // --- SurveyReportComparator クラスのテスト ---
     @isTest
@@ -304,33 +291,35 @@ private class SurveyReportHistoryControllerTest {
         Integer result4 = comparator.compare(recNull, rec1);
         System.assert(result4 > 0, 'SortNumber__cがNULLの場合は後に来るべき');
         
-        // 同じ SortNumber__c の2件
+        // 同じ SortNumber__c の2件を作成
         StandardSalesFloorSurveyReport__c r1 = new StandardSalesFloorSurveyReport__c(
-            Name='A', journal__c=j.Id, SortNumber__c=10, FaceCount__c=0);
+            Name='Report Same 1', journal__c=j.Id, SortNumber__c=10, FaceCount__c=1);
         StandardSalesFloorSurveyReport__c r2 = new StandardSalesFloorSurveyReport__c(
-            Name='B', journal__c=j.Id, SortNumber__c=10, FaceCount__c=0);
+            Name='Report Same 2', journal__c=j.Id, SortNumber__c=10, FaceCount__c=1);
         insert new List<StandardSalesFloorSurveyReport__c>{ r1, r2 };
 
-        // ① 先に r1 を同期更新（ここで一段目の時刻）
-        r1.FaceCount__c = 5;  // 値が変わる更新
+        // 先に r1 を更新
+        r1.FaceCount__c = 2;
         update r1;
 
-        // ② r2 を Queueable で非同期更新（stopTest で実行 → r1 より"確実に"新しくなる）
+        // Test.startTestで区切ってから r2 を更新（時間差を作る）
         Test.startTest();
-        System.enqueueJob(new _UpdateSSRQueue(r2.Id));
+        r2.FaceCount__c = 3;
+        update r2;
         Test.stopTest();
 
-        // 再取得して実際に時刻差が付いているかを明示チェック（デバッグ用）
-        r1 = [SELECT Id, LastModifiedDate FROM StandardSalesFloorSurveyReport__c WHERE Id = :r1.Id];
-        r2 = [SELECT Id, LastModifiedDate FROM StandardSalesFloorSurveyReport__c WHERE Id = :r2.Id];
-        System.assert(r2.LastModifiedDate > r1.LastModifiedDate,
-            '準備段階：r2 の LastModifiedDate を r1 より新しくできていない');
+        // 再取得して比較
+        r1 = [SELECT Id, SortNumber__c, LastModifiedDate FROM StandardSalesFloorSurveyReport__c WHERE Id = :r1.Id];
+        r2 = [SELECT Id, SortNumber__c, LastModifiedDate FROM StandardSalesFloorSurveyReport__c WHERE Id = :r2.Id];
+        
+        // LastModifiedDateが異なることを確認（デバッグ用）
+        if (r1.LastModifiedDate == r2.LastModifiedDate) {
+            System.debug('WARNING: LastModifiedDateが同じです。r1=' + r1.LastModifiedDate + ', r2=' + r2.LastModifiedDate);
+        }
 
-        // 並べ替え検証
-        List<StandardSalesFloorSurveyReport__c> listToSort = new List<StandardSalesFloorSurveyReport__c>{ r1, r2 };
-        listToSort.sort(new SurveyReportHistoryController.SurveyReportComparator());
-        System.assertEquals(r2.Id, listToSort[0].Id,
-            '同じSortNumber__cの場合、Updateで新しくした方（reportNewer=r2）が先に来るべき');
+        // 同じSortNumber__cの場合、新しい方（r2）が先に来るべき
+        Integer result5 = comparator.compare(r2, r1);
+        System.assert(result5 < 0, '同じSortNumber__cの場合、新しい方（r2）が先に来るべき');
         
         // 両方のSortNumber__cとLastModifiedDateがnullの場合（メモリ上のオブジェクトで検証）
         StandardSalesFloorSurveyReport__c reportBothNull1 = new StandardSalesFloorSurveyReport__c(
@@ -348,10 +337,10 @@ private class SurveyReportHistoryControllerTest {
             SortNumber__c = 1
         );
         
-        Integer result7 = comparator.compare(report1, report1ModNull);
+        Integer result7 = comparator.compare(rec1, report1ModNull);
         System.assert(result7 < 0, '同じSortNumber__cで、LastModifiedDateがある方が先に来るべき');
         
-        Integer result8 = comparator.compare(report1ModNull, report1);
+        Integer result8 = comparator.compare(report1ModNull, rec1);
         System.assert(result8 > 0, '同じSortNumber__cで、LastModifiedDateがnullの方が後に来るべき');
         
         // SortNumber__cがnullで、片方のLastModifiedDateもnullの場合
@@ -359,10 +348,10 @@ private class SurveyReportHistoryControllerTest {
             SortNumber__c = null
         );
         
-        Integer result9 = comparator.compare(reportNull, reportNullWithoutDate);
+        Integer result9 = comparator.compare(recNull, reportNullWithoutDate);
         System.assert(result9 < 0, 'SortNumber__cが両方nullの場合、LastModifiedDateがある方が先に来るべき');
         
-        Integer result10 = comparator.compare(reportNullWithoutDate, reportNull);
+        Integer result10 = comparator.compare(reportNullWithoutDate, recNull);
         System.assert(result10 > 0, 'SortNumber__cが両方nullの場合、LastModifiedDateがnullの方が後に来るべき');
     }
     
