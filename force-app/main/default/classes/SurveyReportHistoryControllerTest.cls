@@ -326,6 +326,10 @@ private class SurveyReportHistoryControllerTest {
         // ① まず r1 を同期更新（時刻の"1段目"を作る）
         r1.FaceCount__c = 5;
         update r1;
+        
+        // r1の更新後のLastModifiedDateを取得
+        r1 = [SELECT Id, SortNumber__c, LastModifiedDate FROM StandardSalesFloorSurveyReport__c WHERE Id = :r1.Id];
+        Datetime r1Time = r1.LastModifiedDate;
 
         // ② r2 を Queueable で更新（stopTest 時に実行 → r1 より新しくなる想定）
         Test.startTest();
@@ -336,14 +340,34 @@ private class SurveyReportHistoryControllerTest {
         r2 = [SELECT Id, FaceCount__c FROM StandardSalesFloorSurveyReport__c WHERE Id = :r2.Id];
         r2.FaceCount__c = r2.FaceCount__c + 1;
         update r2;
+        
+        // デバッグ：時間差を確認
+        System.debug('r1の最初の更新時刻: ' + r1Time);
 
         // ★ 重要：必ず SOQL で"両方"を再取得してから比較に使う
-        r1 = [SELECT Id, SortNumber__c, LastModifiedDate FROM StandardSalesFloorSurveyReport__c WHERE Id = :r1.Id];
-        r2 = [SELECT Id, SortNumber__c, LastModifiedDate FROM StandardSalesFloorSurveyReport__c WHERE Id = :r2.Id];
+        r1 = [SELECT Id, SortNumber__c, LastModifiedDate, Name FROM StandardSalesFloorSurveyReport__c WHERE Id = :r1.Id];
+        r2 = [SELECT Id, SortNumber__c, LastModifiedDate, Name FROM StandardSalesFloorSurveyReport__c WHERE Id = :r2.Id];
+        
+        // デバッグ情報を追加
+        System.debug('r1: Name=' + r1.Name + ', LastModifiedDate=' + r1.LastModifiedDate);
+        System.debug('r2: Name=' + r2.Name + ', LastModifiedDate=' + r2.LastModifiedDate);
+        System.debug('時間差(ms): ' + (r2.LastModifiedDate.getTime() - r1.LastModifiedDate.getTime()));
+
+        // 時間差が同じ場合の対処
+        if (r1.LastModifiedDate >= r2.LastModifiedDate) {
+            // r2をもう一度更新して確実に新しくする
+            r2.FaceCount__c = r2.FaceCount__c + 1;
+            update r2;
+            
+            // 再度取得
+            r2 = [SELECT Id, SortNumber__c, LastModifiedDate, Name FROM StandardSalesFloorSurveyReport__c WHERE Id = :r2.Id];
+            System.debug('追加更新後のr2: LastModifiedDate=' + r2.LastModifiedDate);
+        }
 
         // デバッグ用：本当に r2 の方が新しいか確認
         System.assert(r2.LastModifiedDate > r1.LastModifiedDate,
-            '準備段階：r2 の LastModifiedDate を r1 より新しくできていない');
+            '準備段階：r2 の LastModifiedDate を r1 より新しくできていない。' +
+            'r1=' + r1.LastModifiedDate + ', r2=' + r2.LastModifiedDate);
 
         // ソートして検証
         List<StandardSalesFloorSurveyReport__c> listToSort = new List<StandardSalesFloorSurveyReport__c>{ r1, r2 };
