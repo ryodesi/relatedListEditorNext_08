@@ -131,7 +131,7 @@ public with sharing class SurveyReportHistoryController {
         // 2025年9月16日修正：SortNumber__cを追加
         List<journal__c> journalsInMonth = [
             SELECT Id, LastModifiedDate,
-                   (SELECT Id, Name, Product__c, SKU__c, attribute__c, SalesFloorSelection__c, FaceCount__c, LastModifiedDate, LastManualUpdateDate__c, SortNumber__c FROM journals__r ORDER BY LastModifiedDate DESC)
+                   (SELECT Id, Name, Product__c, SKU__c, attribute__c, SalesFloorSelection__c, FaceCount__c, LastModifiedDate, LastManualUpdateDate__c, SortNumber__c, InHouseConflict__c FROM journals__r ORDER BY LastModifiedDate DESC)
             FROM journal__c
             WHERE customer__c = :accountId
               AND visitday__c < :startOfCurrentMonth
