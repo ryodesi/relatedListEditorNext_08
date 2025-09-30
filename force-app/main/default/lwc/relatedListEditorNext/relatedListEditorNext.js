@@ -574,18 +574,19 @@ export default class RelatedListEditor extends LightningElement {
                 SalesFloorSelection__c: record.SalesFloorSelection__c,
                 attribute__c: record.attribute__c,
                 SortNumber__c: record.SortNumber__c,  // 2025年9月16日追加
+                InHouseConflict__c: record.InHouseConflict__c ?? '',  // 2025年9月30日追加
                 rowIndex: idx + 1
             }));
 
             const filters = {
                 recordsType3: r => r.SalesFloorSelection__c === '冷ケース' && r.attribute__c === 'ビールテイスト',
                 recordsType4: r => r.SalesFloorSelection__c === '冷ケース' && r.attribute__c === 'RTD',
-                recordsType5: r => r.SalesFloorSelection__c === '冷ケース' && !['他社', 'RTD', 'ビールテイスト'].includes(r.attribute__c),
-                recordsType6: r => r.SalesFloorSelection__c === '冷ケース' && r.attribute__c === '他社',
+                recordsType5: r => r.SalesFloorSelection__c === '冷ケース' && !['RTD', 'ビールテイスト'].includes(r.attribute__c) && r.InHouseConflict__c !== '競合',
+                recordsType6: r => r.SalesFloorSelection__c === '冷ケース' && r.InHouseConflict__c === '競合',
                 recordsType7: r => r.SalesFloorSelection__c === 'ケース常温定番' && r.attribute__c === 'ビールテイスト',
                 recordsType8: r => r.SalesFloorSelection__c === 'ケース常温定番' && r.attribute__c === 'RTD',
-                recordsType9: r => r.SalesFloorSelection__c === 'ケース常温定番' && !['他社', 'RTD', 'ビールテイスト'].includes(r.attribute__c),
-                recordsType10: r => r.SalesFloorSelection__c === 'ケース常温定番' && r.attribute__c === '他社',
+                recordsType9: r => r.SalesFloorSelection__c === 'ケース常温定番' && !['RTD', 'ビールテイスト'].includes(r.attribute__c) && r.InHouseConflict__c !== '競合',
+                recordsType10: r => r.SalesFloorSelection__c === 'ケース常温定番' && r.InHouseConflict__c === '競合',
             };
 
             this.recordTypeKeys.forEach(type => {
@@ -1185,6 +1186,7 @@ export default class RelatedListEditor extends LightningElement {
                 SalesFloorSelection__c: record.SalesFloorSelection__c,
                 attribute__c: record.attribute__c,
                 SortNumber__c: record.SortNumber__c,  // 2025年9月16日追加
+                InHouseConflict__c: record.InHouseConflict__c ?? '',  // 2025年9月30日追加
                 LastModifiedDate: record.LastModifiedDate,
                 rowIndex: idx + 1
             }));
@@ -1192,12 +1194,12 @@ export default class RelatedListEditor extends LightningElement {
             const filters = {
                 submittedColdBeerRecords: r => r.SalesFloorSelection__c === '冷ケース' && r.attribute__c === 'ビールテイスト',
                 submittedColdRTDRecords: r => r.SalesFloorSelection__c === '冷ケース' && r.attribute__c === 'RTD',
-                submittedColdOtherAttRecords: r => r.SalesFloorSelection__c === '冷ケース' && !['他社', 'RTD', 'ビールテイスト'].includes(r.attribute__c),
-                submittedColdOtherComRecords: r => r.SalesFloorSelection__c === '冷ケース' && r.attribute__c === '他社',
+                submittedColdOtherAttRecords: r => r.SalesFloorSelection__c === '冷ケース' && !['RTD', 'ビールテイスト'].includes(r.attribute__c) && r.InHouseConflict__c !== '競合',
+                submittedColdOtherComRecords: r => r.SalesFloorSelection__c === '冷ケース' && r.InHouseConflict__c === '競合',
                 submittedRoomBeerRecords: r => r.SalesFloorSelection__c === 'ケース常温定番' && r.attribute__c === 'ビールテイスト',
                 submittedRoomRTDRecords: r => r.SalesFloorSelection__c === 'ケース常温定番' && r.attribute__c === 'RTD',
-                submittedRoomOtherAttRecords: r => r.SalesFloorSelection__c === 'ケース常温定番' && !['他社', 'RTD', 'ビールテイスト'].includes(r.attribute__c),
-                submittedRoomOtherComRecords: r => r.SalesFloorSelection__c === 'ケース常温定番' && r.attribute__c === '他社',
+                submittedRoomOtherAttRecords: r => r.SalesFloorSelection__c === 'ケース常温定番' && !['RTD', 'ビールテイスト'].includes(r.attribute__c) && r.InHouseConflict__c !== '競合',
+                submittedRoomOtherComRecords: r => r.SalesFloorSelection__c === 'ケース常温定番' && r.InHouseConflict__c === '競合',
             };
 
             this.submittedSurveysRecordTypeKeys.forEach(type => {
