@@ -579,12 +579,12 @@ export default class RelatedListEditor extends LightningElement {
             }));
 
             const filters = {
-                recordsType3: r => r.SalesFloorSelection__c === '冷ケース' && r.attribute__c === 'ビールテイスト',
-                recordsType4: r => r.SalesFloorSelection__c === '冷ケース' && r.attribute__c === 'RTD',
+                recordsType3: r => r.SalesFloorSelection__c === '冷ケース' && r.attribute__c === 'ビールテイスト' && r.InHouseConflict__c !== '競合',
+                recordsType4: r => r.SalesFloorSelection__c === '冷ケース' && r.attribute__c === 'RTD' && r.InHouseConflict__c !== '競合',
                 recordsType5: r => r.SalesFloorSelection__c === '冷ケース' && !['RTD', 'ビールテイスト'].includes(r.attribute__c) && r.InHouseConflict__c !== '競合',
                 recordsType6: r => r.SalesFloorSelection__c === '冷ケース' && r.InHouseConflict__c === '競合',
-                recordsType7: r => r.SalesFloorSelection__c === 'ケース常温定番' && r.attribute__c === 'ビールテイスト',
-                recordsType8: r => r.SalesFloorSelection__c === 'ケース常温定番' && r.attribute__c === 'RTD',
+                recordsType7: r => r.SalesFloorSelection__c === 'ケース常温定番' && r.attribute__c === 'ビールテイスト' && r.InHouseConflict__c !== '競合',
+                recordsType8: r => r.SalesFloorSelection__c === 'ケース常温定番' && r.attribute__c === 'RTD' && r.InHouseConflict__c !== '競合',
                 recordsType9: r => r.SalesFloorSelection__c === 'ケース常温定番' && !['RTD', 'ビールテイスト'].includes(r.attribute__c) && r.InHouseConflict__c !== '競合',
                 recordsType10: r => r.SalesFloorSelection__c === 'ケース常温定番' && r.InHouseConflict__c === '競合',
             };
@@ -1192,12 +1192,12 @@ export default class RelatedListEditor extends LightningElement {
             }));
 
             const filters = {
-                submittedColdBeerRecords: r => r.SalesFloorSelection__c === '冷ケース' && r.attribute__c === 'ビールテイスト',
-                submittedColdRTDRecords: r => r.SalesFloorSelection__c === '冷ケース' && r.attribute__c === 'RTD',
+                submittedColdBeerRecords: r => r.SalesFloorSelection__c === '冷ケース' && r.attribute__c === 'ビールテイスト' && r.InHouseConflict__c !== '競合',
+                submittedColdRTDRecords: r => r.SalesFloorSelection__c === '冷ケース' && r.attribute__c === 'RTD' && r.InHouseConflict__c !== '競合',
                 submittedColdOtherAttRecords: r => r.SalesFloorSelection__c === '冷ケース' && !['RTD', 'ビールテイスト'].includes(r.attribute__c) && r.InHouseConflict__c !== '競合',
                 submittedColdOtherComRecords: r => r.SalesFloorSelection__c === '冷ケース' && r.InHouseConflict__c === '競合',
-                submittedRoomBeerRecords: r => r.SalesFloorSelection__c === 'ケース常温定番' && r.attribute__c === 'ビールテイスト',
-                submittedRoomRTDRecords: r => r.SalesFloorSelection__c === 'ケース常温定番' && r.attribute__c === 'RTD',
+                submittedRoomBeerRecords: r => r.SalesFloorSelection__c === 'ケース常温定番' && r.attribute__c === 'ビールテイスト' && r.InHouseConflict__c !== '競合',
+                submittedRoomRTDRecords: r => r.SalesFloorSelection__c === 'ケース常温定番' && r.attribute__c === 'RTD' && r.InHouseConflict__c !== '競合',
                 submittedRoomOtherAttRecords: r => r.SalesFloorSelection__c === 'ケース常温定番' && !['RTD', 'ビールテイスト'].includes(r.attribute__c) && r.InHouseConflict__c !== '競合',
                 submittedRoomOtherComRecords: r => r.SalesFloorSelection__c === 'ケース常温定番' && r.InHouseConflict__c === '競合',
             };
