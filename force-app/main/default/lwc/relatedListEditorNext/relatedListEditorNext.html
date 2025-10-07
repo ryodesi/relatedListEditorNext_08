@@ -150,65 +150,7 @@
                                     </div>
                                 </template>
                             </lightning-tab>
-                            <!-- その他 -->
-                            <lightning-tab label="その他">
-                                <template if:true={recordsType5}>
-                                    <table class="slds-table slds-table_cell-buffer slds-table_bordered fixed-width-table">
-                                        <thead>
-                                            <tr>
-                                                <th></th>
-                                                <th class="border-right">製品</th>
-                                                <th class="border-right">SKU</th>
-                                                <th>フェイス数</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <template for:each={recordsType5} for:item="rec" for:index="index">
-                                                <tr key={rec.Id}>
-                                                    <td>
-                                                        <template if:true={rec.rowIndex}>
-                                                            {rec.rowIndex}
-                                                        </template>
-                                                        <template if:false={rec.rowIndex}>
-                                                            &nbsp;
-                                                        </template>
-                                                    </td>
-                                                    <td>{rec.Product__c}</td>
-                                                    <td>{rec.SKU__c}</td>
-                                                    <td onclick={handleCellClick} data-id={rec.Id} data-record-type="recordsType5">
-                                                        <template if:true={rec.isEditing}>
-                                                            <input type="text" pattern="[0-9]*" inputmode="numeric" 
-                                                                data-field="FaceCount__c" value={rec.FaceCount__c} 
-                                                                data-id={rec.Id} onchange={handleInputChange} autofocus
-                                                                onblur={disableEdit} class="slds-input centered-input">
-                                                            
-                                                        </template>
-                                                        <template if:false={rec.isEditing}>
-                                                            {rec.FaceCount__c}
-                                                        </template>
-                                                    </td>
-                                                </tr>
-                                            </template>
-                                        </tbody>
-                                    </table>
-                                </template>
-                                <!-- ページネーション -->
-                                <template if:true={shouldShowPagination_type5}>
-                                    <div class="slds-align_absolute-center slds-m-top_small">
-                                        <lightning-button label="|<" data-type="recordsType5" onclick={handleFirstPage}
-                                            disabled={isFirstPage_type5}></lightning-button>
-                                        <lightning-button label="<" data-type="recordsType5" onclick={handlePrevPage}
-                                            disabled={isFirstPage_type5}>
-                                        </lightning-button>
-                                        <span class="slds-m-horizontal_small">{currentPage_type5} /
-                                            {totalPage_type5}</span>
-                                        <lightning-button label=">" data-type="recordsType5" onclick={handleNextPage}
-                                            disabled={isLastPage_type5}></lightning-button>
-                                        <lightning-button label=">|" data-type="recordsType5" onclick={handleLastPage}
-                                            disabled={isLastPage_type5}></lightning-button>
-                                    </div>
-                                </template>
-                            </lightning-tab>
+                            <!-- 2025年10月7日修正：タブ表示順序変更（ビール、RTD、他社、その他） -->
                             <!-- 他社 -->
                             <lightning-tab label="他社">
                                 <template if:true={recordsType6}>
@@ -265,6 +207,65 @@
                                             disabled={isLastPage_type6}></lightning-button>
                                         <lightning-button label=">|" data-type="recordsType6" onclick={handleLastPage}
                                             disabled={isLastPage_type6}></lightning-button>
+                                    </div>
+                                </template>
+                            </lightning-tab>
+                            <!-- その他 -->
+                            <lightning-tab label="その他">
+                                <template if:true={recordsType5}>
+                                    <table class="slds-table slds-table_cell-buffer slds-table_bordered fixed-width-table">
+                                        <thead>
+                                            <tr>
+                                                <th></th>
+                                                <th class="border-right">製品</th>
+                                                <th class="border-right">SKU</th>
+                                                <th>フェイス数</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <template for:each={recordsType5} for:item="rec" for:index="index">
+                                                <tr key={rec.Id}>
+                                                    <td>
+                                                        <template if:true={rec.rowIndex}>
+                                                            {rec.rowIndex}
+                                                        </template>
+                                                        <template if:false={rec.rowIndex}>
+                                                            &nbsp;
+                                                        </template>
+                                                    </td>
+                                                    <td>{rec.Product__c}</td>
+                                                    <td>{rec.SKU__c}</td>
+                                                    <td onclick={handleCellClick} data-id={rec.Id} data-record-type="recordsType5">
+                                                        <template if:true={rec.isEditing}>
+                                                            <input type="text" pattern="[0-9]*" inputmode="numeric"
+                                                                data-field="FaceCount__c" value={rec.FaceCount__c}
+                                                                data-id={rec.Id} onchange={handleInputChange} autofocus
+                                                                onblur={disableEdit} class="slds-input centered-input">
+
+                                                        </template>
+                                                        <template if:false={rec.isEditing}>
+                                                            {rec.FaceCount__c}
+                                                        </template>
+                                                    </td>
+                                                </tr>
+                                            </template>
+                                        </tbody>
+                                    </table>
+                                </template>
+                                <!-- ページネーション -->
+                                <template if:true={shouldShowPagination_type5}>
+                                    <div class="slds-align_absolute-center slds-m-top_small">
+                                        <lightning-button label="|<" data-type="recordsType5" onclick={handleFirstPage}
+                                            disabled={isFirstPage_type5}></lightning-button>
+                                        <lightning-button label="<" data-type="recordsType5" onclick={handlePrevPage}
+                                            disabled={isFirstPage_type5}>
+                                        </lightning-button>
+                                        <span class="slds-m-horizontal_small">{currentPage_type5} /
+                                            {totalPage_type5}</span>
+                                        <lightning-button label=">" data-type="recordsType5" onclick={handleNextPage}
+                                            disabled={isLastPage_type5}></lightning-button>
+                                        <lightning-button label=">|" data-type="recordsType5" onclick={handleLastPage}
+                                            disabled={isLastPage_type5}></lightning-button>
                                     </div>
                                 </template>
                             </lightning-tab>
@@ -403,65 +404,7 @@
                                     </div>
                                 </template>
                             </lightning-tab>
-                            <!-- その他 -->
-                            <lightning-tab label="その他">
-                                <template if:true={recordsType9}>
-                                    <table class="slds-table slds-table_cell-buffer slds-table_bordered fixed-width-table">
-                                        <thead>
-                                            <tr>
-                                                <th></th>
-                                                <th class="border-right">製品</th>
-                                                <th class="border-right">SKU</th>
-                                                <th>コマ数</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <template for:each={recordsType9} for:item="rec" for:index="index">
-                                                <tr key={rec.Id}>
-                                                    <td>
-                                                        <template if:true={rec.rowIndex}>
-                                                            {rec.rowIndex}
-                                                        </template>
-                                                        <template if:false={rec.rowIndex}>
-                                                            &nbsp;
-                                                        </template>
-                                                    </td>
-                                                    <td>{rec.Product__c}</td>
-                                                    <td>{rec.SKU__c}</td>
-                                                    <td onclick={handleCellClick} data-id={rec.Id} data-record-type="recordsType9">
-                                                        <template if:true={rec.isEditing}>
-                                                            <input type="text" pattern="[0-9]*" inputmode="numeric" 
-                                                                data-field="FaceCount__c" value={rec.FaceCount__c} 
-                                                                data-id={rec.Id} onchange={handleInputChange} autofocus
-                                                                onblur={disableEdit} class="slds-input centered-input">
-                                                            
-                                                        </template>
-                                                        <template if:false={rec.isEditing}>
-                                                            {rec.FaceCount__c}
-                                                        </template>
-                                                    </td>
-                                                </tr>
-                                            </template>
-                                        </tbody>
-                                    </table>
-                                </template>
-                                <!-- ページネーション -->
-                                <template if:true={shouldShowPagination_type9}>
-                                    <div class="slds-align_absolute-center slds-m-top_small">
-                                        <lightning-button label="|<" data-type="recordsType9" onclick={handleFirstPage}
-                                            disabled={isFirstPage_type9}></lightning-button>
-                                        <lightning-button label="<" data-type="recordsType9" onclick={handlePrevPage}
-                                            disabled={isFirstPage_type9}>
-                                        </lightning-button>
-                                        <span class="slds-m-horizontal_small">{currentPage_type9} /
-                                            {totalPage_type9}</span>
-                                        <lightning-button label=">" data-type="recordsType9" onclick={handleNextPage}
-                                            disabled={isLastPage_type9}></lightning-button>
-                                        <lightning-button label=">|" data-type="recordsType9" onclick={handleLastPage}
-                                            disabled={isLastPage_type9}></lightning-button>
-                                    </div>
-                                </template>
-                            </lightning-tab>
+                            <!-- 2025年10月7日修正：タブ表示順序変更（ビール、RTD、他社、その他） -->
                             <!-- 他社 -->
                             <lightning-tab label="他社">
                                 <template if:true={recordsType10}>
@@ -518,6 +461,65 @@
                                             disabled={isLastPage_type10}></lightning-button>
                                         <lightning-button label=">|" data-type="recordsType10" onclick={handleLastPage}
                                             disabled={isLastPage_type10}></lightning-button>
+                                    </div>
+                                </template>
+                            </lightning-tab>
+                            <!-- その他 -->
+                            <lightning-tab label="その他">
+                                <template if:true={recordsType9}>
+                                    <table class="slds-table slds-table_cell-buffer slds-table_bordered fixed-width-table">
+                                        <thead>
+                                            <tr>
+                                                <th></th>
+                                                <th class="border-right">製品</th>
+                                                <th class="border-right">SKU</th>
+                                                <th>コマ数</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <template for:each={recordsType9} for:item="rec" for:index="index">
+                                                <tr key={rec.Id}>
+                                                    <td>
+                                                        <template if:true={rec.rowIndex}>
+                                                            {rec.rowIndex}
+                                                        </template>
+                                                        <template if:false={rec.rowIndex}>
+                                                            &nbsp;
+                                                        </template>
+                                                    </td>
+                                                    <td>{rec.Product__c}</td>
+                                                    <td>{rec.SKU__c}</td>
+                                                    <td onclick={handleCellClick} data-id={rec.Id} data-record-type="recordsType9">
+                                                        <template if:true={rec.isEditing}>
+                                                            <input type="text" pattern="[0-9]*" inputmode="numeric"
+                                                                data-field="FaceCount__c" value={rec.FaceCount__c}
+                                                                data-id={rec.Id} onchange={handleInputChange} autofocus
+                                                                onblur={disableEdit} class="slds-input centered-input">
+
+                                                        </template>
+                                                        <template if:false={rec.isEditing}>
+                                                            {rec.FaceCount__c}
+                                                        </template>
+                                                    </td>
+                                                </tr>
+                                            </template>
+                                        </tbody>
+                                    </table>
+                                </template>
+                                <!-- ページネーション -->
+                                <template if:true={shouldShowPagination_type9}>
+                                    <div class="slds-align_absolute-center slds-m-top_small">
+                                        <lightning-button label="|<" data-type="recordsType9" onclick={handleFirstPage}
+                                            disabled={isFirstPage_type9}></lightning-button>
+                                        <lightning-button label="<" data-type="recordsType9" onclick={handlePrevPage}
+                                            disabled={isFirstPage_type9}>
+                                        </lightning-button>
+                                        <span class="slds-m-horizontal_small">{currentPage_type9} /
+                                            {totalPage_type9}</span>
+                                        <lightning-button label=">" data-type="recordsType9" onclick={handleNextPage}
+                                            disabled={isLastPage_type9}></lightning-button>
+                                        <lightning-button label=">|" data-type="recordsType9" onclick={handleLastPage}
+                                            disabled={isLastPage_type9}></lightning-button>
                                     </div>
                                 </template>
                             </lightning-tab>
@@ -642,54 +644,7 @@
                                         </div>
                                     </template>
                                 </lightning-tab>
-                                <!-- その他 -->
-                                <lightning-tab label="その他">
-                                    <template if:true={submittedColdOtherAttRecords}>
-                                        <table class="slds-table slds-table_cell-buffer slds-table_bordered fixed-width-table">
-                                            <thead>
-                                                <tr>
-                                                    <th></th>
-                                                    <th class="border-right">製品</th>
-                                                    <th class="border-right">SKU</th>
-                                                    <th>フェイス数</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                <template for:each={submittedColdOtherAttRecords} for:item="rec" for:index="index">
-                                                    <tr key={rec.Id}>
-                                                        <td>
-                                                            <template if:true={rec.rowIndex}>
-                                                                {rec.rowIndex}
-                                                            </template>
-                                                            <template if:false={rec.rowIndex}>
-                                                                &nbsp;
-                                                            </template>
-                                                        </td>
-                                                        <td>{rec.Product__c}</td>
-                                                        <td>{rec.SKU__c}</td>
-                                                        <td>{rec.FaceCount__c}</td>
-                                                    </tr>
-                                                </template>
-                                            </tbody>
-                                        </table>
-                                    </template>
-                                    <!-- ページネーション -->
-                                    <template if:true={shouldShowPagination_submittedColdOtherAtt}>
-                                        <div class="slds-align_absolute-center slds-m-top_small">
-                                            <lightning-button label="|<" data-type="submittedColdOtherAttRecords" onclick={handleFirstPage}
-                                                disabled={isFirstPage_submittedColdOtherAtt}></lightning-button>
-                                            <lightning-button label="<" data-type="submittedColdOtherAttRecords" onclick={handlePrevPage}
-                                                disabled={isFirstPage_submittedColdOtherAtt}>
-                                            </lightning-button>
-                                            <span class="slds-m-horizontal_small">{currentPage_submittedColdOtherAtt} /
-                                                {totalPage_submittedColdOtherAtt}</span>
-                                            <lightning-button label=">" data-type="submittedColdOtherAttRecords" onclick={handleNextPage}
-                                                disabled={isLastPage_submittedColdOtherAtt}></lightning-button>
-                                            <lightning-button label=">|" data-type="submittedColdOtherAttRecords" onclick={handleLastPage}
-                                                disabled={isLastPage_submittedColdOtherAtt}></lightning-button>
-                                        </div>
-                                    </template>
-                                </lightning-tab>
+                                <!-- 2025年10月7日修正：タブ表示順序変更（ビール、RTD、他社、その他） -->
                                 <!-- 他社 -->
                                 <lightning-tab label="他社">
                                     <template if:true={submittedColdOtherComRecords}>
@@ -735,6 +690,54 @@
                                                 disabled={isLastPage_submittedColdOtherCom}></lightning-button>
                                             <lightning-button label=">|" data-type="submittedColdOtherComRecords" onclick={handleLastPage}
                                                 disabled={isLastPage_submittedColdOtherCom}></lightning-button>
+                                        </div>
+                                    </template>
+                                </lightning-tab>
+                                <!-- その他 -->
+                                <lightning-tab label="その他">
+                                    <template if:true={submittedColdOtherAttRecords}>
+                                        <table class="slds-table slds-table_cell-buffer slds-table_bordered fixed-width-table">
+                                            <thead>
+                                                <tr>
+                                                    <th></th>
+                                                    <th class="border-right">製品</th>
+                                                    <th class="border-right">SKU</th>
+                                                    <th>フェイス数</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <template for:each={submittedColdOtherAttRecords} for:item="rec" for:index="index">
+                                                    <tr key={rec.Id}>
+                                                        <td>
+                                                            <template if:true={rec.rowIndex}>
+                                                                {rec.rowIndex}
+                                                            </template>
+                                                            <template if:false={rec.rowIndex}>
+                                                                &nbsp;
+                                                            </template>
+                                                        </td>
+                                                        <td>{rec.Product__c}</td>
+                                                        <td>{rec.SKU__c}</td>
+                                                        <td>{rec.FaceCount__c}</td>
+                                                    </tr>
+                                                </template>
+                                            </tbody>
+                                        </table>
+                                    </template>
+                                    <!-- ページネーション -->
+                                    <template if:true={shouldShowPagination_submittedColdOtherAtt}>
+                                        <div class="slds-align_absolute-center slds-m-top_small">
+                                            <lightning-button label="|<" data-type="submittedColdOtherAttRecords" onclick={handleFirstPage}
+                                                disabled={isFirstPage_submittedColdOtherAtt}></lightning-button>
+                                            <lightning-button label="<" data-type="submittedColdOtherAttRecords" onclick={handlePrevPage}
+                                                disabled={isFirstPage_submittedColdOtherAtt}>
+                                            </lightning-button>
+                                            <span class="slds-m-horizontal_small">{currentPage_submittedColdOtherAtt} /
+                                                {totalPage_submittedColdOtherAtt}</span>
+                                            <lightning-button label=">" data-type="submittedColdOtherAttRecords" onclick={handleNextPage}
+                                                disabled={isLastPage_submittedColdOtherAtt}></lightning-button>
+                                            <lightning-button label=">|" data-type="submittedColdOtherAttRecords" onclick={handleLastPage}
+                                                disabled={isLastPage_submittedColdOtherAtt}></lightning-button>
                                         </div>
                                     </template>
                                 </lightning-tab>
@@ -839,54 +842,7 @@
                                         </div>
                                     </template>
                                 </lightning-tab>
-                                <!-- その他 -->
-                                <lightning-tab label="その他">
-                                    <template if:true={submittedRoomOtherAttRecords}>
-                                        <table class="slds-table slds-table_cell-buffer slds-table_bordered fixed-width-table">
-                                            <thead>
-                                                <tr>
-                                                    <th></th>
-                                                    <th class="border-right">製品</th>
-                                                    <th class="border-right">SKU</th>
-                                                    <th>コマ数</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                <template for:each={submittedRoomOtherAttRecords} for:item="rec" for:index="index">
-                                                    <tr key={rec.Id}>
-                                                        <td>
-                                                            <template if:true={rec.rowIndex}>
-                                                                {rec.rowIndex}
-                                                            </template>
-                                                            <template if:false={rec.rowIndex}>
-                                                                &nbsp;
-                                                            </template>
-                                                        </td>
-                                                        <td>{rec.Product__c}</td>
-                                                        <td>{rec.SKU__c}</td>
-                                                        <td>{rec.FaceCount__c}</td>
-                                                    </tr>
-                                                </template>
-                                            </tbody>
-                                        </table>
-                                    </template>
-                                    <!-- ページネーション -->
-                                    <template if:true={shouldShowPagination_submittedRoomOtherAtt}>
-                                        <div class="slds-align_absolute-center slds-m-top_small">
-                                            <lightning-button label="|<" data-type="submittedRoomOtherAttRecords" onclick={handleFirstPage}
-                                                disabled={isFirstPage_submittedRoomOtherAtt}></lightning-button>
-                                            <lightning-button label="<" data-type="submittedRoomOtherAttRecords" onclick={handlePrevPage}
-                                                disabled={isFirstPage_submittedRoomOtherAtt}>
-                                            </lightning-button>
-                                            <span class="slds-m-horizontal_small">{currentPage_submittedRoomOtherAtt} /
-                                                {totalPage_submittedRoomOtherAtt}</span>
-                                            <lightning-button label=">" data-type="submittedRoomOtherAttRecords" onclick={handleNextPage}
-                                                disabled={isLastPage_submittedRoomOtherAtt}></lightning-button>
-                                            <lightning-button label=">|" data-type="submittedRoomOtherAttRecords" onclick={handleLastPage}
-                                                disabled={isLastPage_submittedRoomOtherAtt}></lightning-button>
-                                        </div>
-                                    </template>
-                                </lightning-tab>
+                                <!-- 2025年10月7日修正：タブ表示順序変更（ビール、RTD、他社、その他） -->
                                 <!-- 他社 -->
                                 <lightning-tab label="他社">
                                     <template if:true={submittedRoomOtherComRecords}>
@@ -932,6 +888,54 @@
                                                 disabled={isLastPage_submittedRoomOtherCom}></lightning-button>
                                             <lightning-button label=">|" data-type="submittedRoomOtherComRecords" onclick={handleLastPage}
                                                 disabled={isLastPage_submittedRoomOtherCom}></lightning-button>
+                                        </div>
+                                    </template>
+                                </lightning-tab>
+                                <!-- その他 -->
+                                <lightning-tab label="その他">
+                                    <template if:true={submittedRoomOtherAttRecords}>
+                                        <table class="slds-table slds-table_cell-buffer slds-table_bordered fixed-width-table">
+                                            <thead>
+                                                <tr>
+                                                    <th></th>
+                                                    <th class="border-right">製品</th>
+                                                    <th class="border-right">SKU</th>
+                                                    <th>コマ数</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <template for:each={submittedRoomOtherAttRecords} for:item="rec" for:index="index">
+                                                    <tr key={rec.Id}>
+                                                        <td>
+                                                            <template if:true={rec.rowIndex}>
+                                                                {rec.rowIndex}
+                                                            </template>
+                                                            <template if:false={rec.rowIndex}>
+                                                                &nbsp;
+                                                            </template>
+                                                        </td>
+                                                        <td>{rec.Product__c}</td>
+                                                        <td>{rec.SKU__c}</td>
+                                                        <td>{rec.FaceCount__c}</td>
+                                                    </tr>
+                                                </template>
+                                            </tbody>
+                                        </table>
+                                    </template>
+                                    <!-- ページネーション -->
+                                    <template if:true={shouldShowPagination_submittedRoomOtherAtt}>
+                                        <div class="slds-align_absolute-center slds-m-top_small">
+                                            <lightning-button label="|<" data-type="submittedRoomOtherAttRecords" onclick={handleFirstPage}
+                                                disabled={isFirstPage_submittedRoomOtherAtt}></lightning-button>
+                                            <lightning-button label="<" data-type="submittedRoomOtherAttRecords" onclick={handlePrevPage}
+                                                disabled={isFirstPage_submittedRoomOtherAtt}>
+                                            </lightning-button>
+                                            <span class="slds-m-horizontal_small">{currentPage_submittedRoomOtherAtt} /
+                                                {totalPage_submittedRoomOtherAtt}</span>
+                                            <lightning-button label=">" data-type="submittedRoomOtherAttRecords" onclick={handleNextPage}
+                                                disabled={isLastPage_submittedRoomOtherAtt}></lightning-button>
+                                            <lightning-button label=">|" data-type="submittedRoomOtherAttRecords" onclick={handleLastPage}
+                                                disabled={isLastPage_submittedRoomOtherAtt}></lightning-button>
                                         </div>
                                     </template>
                                 </lightning-tab>
